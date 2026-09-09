@@ -1,0 +1,325 @@
+# AUTO-GENERATED proposal config (plan_a_covert_proj/pipeline/proposal.py fit)
+# Prior: plan_a_covert_proj/config/model_uncertain_thomas.yaml · fitted from run c0c785668abe kernel AC~2028.5 s=0.15
+# Sampling from this config REQUIRES the prior/proposal weight correction
+# (ac_reweight.py applies it automatically via the proposal_of key below).
+#   ai_research_taste_at_coding_automation_anchor_sd (normal): mu 0.000->1.268, sigma 2.341->2.877
+#   ai_research_taste_slope (lognormal): mu 1.248->1.287, sigma 0.857->1.125
+#   automation_logistic_asymptote (shifted_lognormal): mu -2.303->-4.269, sigma 2.338->3.125
+#   coding_automation_efficiency_slope (lognormal): mu 1.099->1.054, sigma 0.857->1.079
+#   inf_compute_asymptote (shifted_lognormal): mu 6.908->4.809, sigma 2.878->3.034
+#   inf_labor_asymptote (shifted_lognormal): mu 2.649->4.128, sigma 2.067->1.795
+#   inv_compute_anchor_exp_cap (shifted_lognormal): mu 0.585->-0.074, sigma 0.735->0.892
+#   max_serial_coding_labor_multiplier (lognormal): mu 18.421->16.647, sigma 7.187->8.618
+#   median_to_top_taste_multiplier (shifted_lognormal): mu 1.454->1.610, sigma 1.023->1.046
+#   software_progress_rate_at_reference_year (lognormal): mu 0.000->0.528, sigma 0.715->0.664
+#   swe_multiplier_at_present_day (shifted_lognormal): mu 0.000->0.457, sigma 1.082->1.431
+#   taste_limit (lognormal): mu 2.773->2.734, sigma 1.082->1.466
+#   ted_ai_m2b (lognormal): mu 0.433->0.601, sigma 1.030->1.222
+proposal_of: plan_a_covert_proj/config/model_uncertain_thomas.yaml
+proposal_meta:
+  source_run: c0c785668abe
+  target: 2028.5
+  sigma: 0.15
+  widen: 1.3
+  corr_shrink: 0.3
+  fitted:
+  - ai_research_taste_at_coding_automation_anchor_sd
+  - ai_research_taste_slope
+  - automation_logistic_asymptote
+  - coding_automation_efficiency_slope
+  - inf_compute_asymptote
+  - inf_labor_asymptote
+  - inv_compute_anchor_exp_cap
+  - max_serial_coding_labor_multiplier
+  - median_to_top_taste_multiplier
+  - software_progress_rate_at_reference_year
+  - swe_multiplier_at_present_day
+  - taste_limit
+  - ted_ai_m2b
+parent: model_uncertain_thomas.yaml
+parameters:
+  ai_research_taste_at_coding_automation_anchor_sd:
+    dist: normal
+    ci80:
+    - -2.41954271
+    - 4.955749
+    min: -10.0
+    max: 10.0
+  ai_research_taste_slope:
+    dist: lognormal
+    ci80:
+    - 0.8566207
+    - 15.30928438
+    min: 0.1
+    max: 10.0
+    clip_to_bounds: false
+  automation_logistic_asymptote:
+    dist: shifted_lognormal
+    ci80:
+    - 0.00025526
+    - 0.76756086
+    shift: 1.0
+    min: 1.0
+    max: 1.0e+30
+  coding_automation_efficiency_slope:
+    dist: lognormal
+    ci80:
+    - 0.71977292
+    - 11.43283703
+    min: 0.1
+    max: 10.0
+  inf_compute_asymptote:
+    dist: shifted_lognormal
+    ci80:
+    - 2.51198215
+    - 5986.34235779
+    shift: 1.0
+    min: 1.0
+    max: 10000000.0
+  inf_labor_asymptote:
+    dist: shifted_lognormal
+    ci80:
+    - 6.22141671
+    - 619.51059896
+    shift: 1.0
+    min: 1.0
+    max: 100000.0
+  inv_compute_anchor_exp_cap:
+    dist: shifted_lognormal
+    ci80:
+    - 0.29595754
+    - 2.91388237
+    shift: 1.0
+    min: 1.0
+    max: 10.0
+  max_serial_coding_labor_multiplier:
+    dist: lognormal
+    ci80:
+    - 271.21252911
+    - 1061940174813.1119
+    min: 1.0
+    max: 1.0e+30
+  median_to_top_taste_multiplier:
+    dist: shifted_lognormal
+    ci80:
+    - 1.30985722
+    - 19.11930923
+    shift: 1.0
+    min: 1.01
+    max: 100.0
+  software_progress_rate_at_reference_year:
+    dist: lognormal
+    ci80:
+    - 0.72337143
+    - 3.9704746
+    min: 0.05
+    max: 10.0
+  swe_multiplier_at_present_day:
+    dist: shifted_lognormal
+    ci80:
+    - 0.25233226
+    - 9.88274006
+    shift: 1.0
+    min: 1.0
+    max: 10.0
+  taste_limit:
+    dist: lognormal
+    ci80:
+    - 2.35049189
+    - 100.734548
+    min: 0.0
+    max: 100.0
+  ted_ai_m2b:
+    dist: lognormal
+    ci80:
+    - 0.38095532
+    - 8.72514488
+    min: 0.01
+    max: 100.0
+    clip_to_bounds: false
+correlation_matrix:
+  parameters:
+  - ai_research_taste_at_coding_automation_anchor_sd
+  - ai_research_taste_slope
+  - automation_logistic_asymptote
+  - coding_automation_efficiency_slope
+  - inf_compute_asymptote
+  - inf_labor_asymptote
+  - inv_compute_anchor_exp_cap
+  - max_serial_coding_labor_multiplier
+  - median_to_top_taste_multiplier
+  - software_progress_rate_at_reference_year
+  - swe_multiplier_at_present_day
+  - taste_limit
+  - ted_ai_m2b
+  correlation_matrix:
+  - - 1.0
+    - 0.009
+    - 0.0783
+    - -0.1168
+    - -0.0898
+    - -0.1376
+    - -0.0096
+    - 0.0045
+    - -0.0257
+    - -0.0804
+    - 0.0887
+    - -0.0157
+    - -0.265
+  - - 0.009
+    - 1.0
+    - -0.1712
+    - 0.0414
+    - -0.1547
+    - 0.1332
+    - -0.0175
+    - -0.1345
+    - -0.0713
+    - -0.0379
+    - 0.0278
+    - 0.0507
+    - -0.1431
+  - - 0.0783
+    - -0.1712
+    - 1.0
+    - -0.0738
+    - -0.0772
+    - 0.0249
+    - -0.1381
+    - 0.1164
+    - 0.1602
+    - 0.0068
+    - 0.239
+    - -0.0611
+    - 0.0749
+  - - -0.1168
+    - 0.0414
+    - -0.0738
+    - 1.0
+    - 0.1114
+    - 0.0488
+    - 0.1483
+    - -0.1306
+    - 0.0142
+    - -0.123
+    - -0.0524
+    - 0.0262
+    - -0.0745
+  - - -0.0898
+    - -0.1547
+    - -0.0772
+    - 0.1114
+    - 1.0
+    - 0.0767
+    - 0.0643
+    - 0.0207
+    - -0.0545
+    - 0.2192
+    - -0.0629
+    - -0.0708
+    - -0.0297
+  - - -0.1376
+    - 0.1332
+    - 0.0249
+    - 0.0488
+    - 0.0767
+    - 1.0
+    - 0.055
+    - -0.0176
+    - -0.0309
+    - 0.043
+    - 0.0718
+    - -0.1808
+    - -0.1094
+  - - -0.0096
+    - -0.0175
+    - -0.1381
+    - 0.1483
+    - 0.0643
+    - 0.055
+    - 1.0
+    - -0.0744
+    - 0.0147
+    - 0.2264
+    - 0.1805
+    - -0.0374
+    - -0.0045
+  - - 0.0045
+    - -0.1345
+    - 0.1164
+    - -0.1306
+    - 0.0207
+    - -0.0176
+    - -0.0744
+    - 1.0
+    - -0.0623
+    - 0.0576
+    - 0.0946
+    - 0.0091
+    - -0.0971
+  - - -0.0257
+    - -0.0713
+    - 0.1602
+    - 0.0142
+    - -0.0545
+    - -0.0309
+    - 0.0147
+    - -0.0623
+    - 1.0
+    - 0.0836
+    - 0.1436
+    - -0.2221
+    - 0.1947
+  - - -0.0804
+    - -0.0379
+    - 0.0068
+    - -0.123
+    - 0.2192
+    - 0.043
+    - 0.2264
+    - 0.0576
+    - 0.0836
+    - 1.0
+    - 0.0015
+    - -0.0794
+    - 0.0623
+  - - 0.0887
+    - 0.0278
+    - 0.239
+    - -0.0524
+    - -0.0629
+    - 0.0718
+    - 0.1805
+    - 0.0946
+    - 0.1436
+    - 0.0015
+    - 1.0
+    - -0.1949
+    - 0.0085
+  - - -0.0157
+    - 0.0507
+    - -0.0611
+    - 0.0262
+    - -0.0708
+    - -0.1808
+    - -0.0374
+    - 0.0091
+    - -0.2221
+    - -0.0794
+    - -0.1949
+    - 1.0
+    - 0.027
+  - - -0.265
+    - -0.1431
+    - 0.0749
+    - -0.0745
+    - -0.0297
+    - -0.1094
+    - -0.0045
+    - -0.0971
+    - 0.1947
+    - 0.0623
+    - 0.0085
+    - 0.027
+    - 1.0
+  correlation_type: spearman

@@ -1,0 +1,164 @@
+{
+ "detection_grids": [
+  {
+   "rows": [
+    [
+     1,
+     0.2,
+     0.26
+    ],
+    [
+     3,
+     0.25,
+     0.3
+    ],
+    [
+     10,
+     0.32,
+     0.37
+    ],
+    [
+     100,
+     0.55,
+     0.75
+    ]
+   ],
+   "size_mw": 10
+  },
+  {
+   "rows": [
+    [
+     1,
+     0.25,
+     0.35
+    ],
+    [
+     3,
+     0.35,
+     0.4
+    ],
+    [
+     10,
+     0.45,
+     0.67
+    ],
+    [
+     100,
+     0.65,
+     0.8
+    ]
+   ],
+   "size_mw": 100
+  },
+  {
+   "rows": [
+    [
+     1,
+     0.4,
+     0.5
+    ],
+    [
+     3,
+     0.45,
+     0.7
+    ],
+    [
+     10,
+     0.7,
+     0.85
+    ],
+    [
+     100,
+     0.85,
+     0.9
+    ]
+   ],
+   "size_mw": 1000
+  }
+ ],
+ "knobs": {
+  "alignment_tax_progress_years": 0.6,
+  "compute_mode": "frontier_relative",
+  "construction_years": 2,
+  "dormancy_years": 0,
+  "facility_w_per_h100e": 600,
+  "frac_stolen": 0.67,
+  "legal_mode": "capped",
+  "legal_scaling_duration": 5,
+  "legal_strategy": "target_year_actual_hw",
+  "max_hw_rate": 0.5,
+  "max_sw_rate": 0,
+  "min_sw_frac_of_tsp": 0.2,
+  "optimal_site_mw": 300,
+  "post_scaling_externalities_rate": 0.25,
+  "setup_period_years": 0.838,
+  "setup_sw_gain_progress_months": 4,
+  "total_h100e": 500000,
+  "total_h100e_frac": 0.0126,
+  "years_before_ac": 0.838
+ },
+ "model_params": {
+  "ac_time_horizon_minutes": 6.089920916003435,
+  "ai_research_taste_at_coding_automation_anchor_sd": 0,
+  "ai_research_taste_slope": 3.4833731503601166,
+  "alpha_experiment_capacity": 0.809,
+  "automation_fraction_at_coding_automation_anchor": 1,
+  "automation_interp_type": "logistic",
+  "automation_logistic_asymptote": 1.1,
+  "benchmarks_and_gaps_mode": true,
+  "coding_automation_efficiency_slope": 3.0000000000000004,
+  "coding_labor_exponent": 0.5,
+  "coding_labor_mode": "optimal_ces",
+  "coding_labor_normalization": 1,
+  "compute_anchor_exp_cap": 0.35785398400569196,
+  "direct_input_exp_cap_ces_params": false,
+  "doubling_difficulty_growth_factor": 0.92,
+  "experiment_compute_exponent": 0.655,
+  "gap_years": 1.103409,
+  "horizon_extrapolation_type": "decaying doubling time",
+  "human_only": false,
+  "include_gap": "gap",
+  "inf_compute_asymptote": 1000.9999999999998,
+  "inf_labor_asymptote": 15.142135623730947,
+  "inv_compute_anchor_exp_cap": 2.794435844492636,
+  "labor_anchor_exp_cap": 1.6,
+  "max_serial_coding_labor_multiplier": 100000000.00000018,
+  "median_to_top_taste_multiplier": 5.281602094603481,
+  "optimal_ces_eta_init": 0.05,
+  "optimal_ces_frontier_cap": 10000000000000036,
+  "optimal_ces_frontier_tail_eps": 2.1544346900318816e-11,
+  "optimal_ces_grid_size": 4096,
+  "parallel_penalty": 0.5,
+  "present_day": 2026.0959,
+  "present_doubling_time": 0.3328402169209725,
+  "present_horizon": 69.9,
+  "r_software": 2.4,
+  "rho_coding_labor": -2,
+  "rho_experiment_capacity": -0.155,
+  "software_progress_rate_at_reference_year": 1,
+  "sos_mode": false,
+  "sos_start_milestone": "AC",
+  "strat_ai_m2b": 2,
+  "swe_multiplier_at_present_day": 2,
+  "taste_limit": 15.999999999999998,
+  "taste_limit_smoothing": 0.5,
+  "taste_schedule_type": "SDs per progress-year",
+  "ted_ai_m2b": 1.54170045294956,
+  "top_percentile": 0.999
+ },
+ "silver_bullet": {
+  "ceiling": 0.7,
+  "delta_years": 2,
+  "p_mid_pause_to_ted": 0.2,
+  "p_used_ted_plus_d": 0.55
+ },
+ "site_mw_range": [
+  10,
+  1000
+ ],
+ "success": true,
+ "time_range": [
+  2017,
+  2100
+ ]
+}

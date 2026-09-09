@@ -1,0 +1,77 @@
+# model_uncertain_thomas.yaml with every SAMPLED distribution narrowed so its 80% CI
+# is 2x smaller, keeping each median exactly where it was. Fixed parameters, choice
+# distributions (rho_coding_labor), and the correlation matrix are inherited unchanged.
+#
+# Narrowing rules (median-preserving in every case):
+#   normal            - keep the midpoint, halve each side's distance in linear space
+#   lognormal         - keep the geometric mean, halve each side in log space
+#                       (e.g. [1, 9] -> [3^0.5, 3^1.5])
+#   shifted_lognormal - same log-space rule applied to the CORE ci80 (the spec's ci80 is
+#                       on the lognormal part, so the full median shift+core_median is kept)
+#   beta              - halve the q10-q90 interval around the (unchanged) median in linear
+#                       space, then refit (alpha, beta) on the same [min, max] support with
+#                       the production _fit_beta_shapes_ci80 so it stays a Beta. Both betas
+#                       here are symmetric, so the median (0.5 on the support) is exact.
+#
+# Only the changed keys are stated; dist kind, shift, min/max bounds and clip flags all
+# inherit from the parent chain via the deep merge. For the betas the parents specify raw
+# alpha/beta shapes (which take precedence over ci80), so the narrowed shapes are given
+# as alpha/beta too.
+
+parent: "model_uncertain_thomas.yaml"
+
+parameters:
+  # --- experiment capacity ---
+  inf_compute_asymptote:            # shifted_lognormal, was ci80 [25, 40000] (core median 1000)
+    dist: shifted_lognormal
+    ci80: [158.113883, 6324.555320]
+  inf_labor_asymptote:              # shifted_lognormal, was ci80 [1, 200] (core median 14.142)
+    dist: shifted_lognormal
+    ci80: [3.760603093, 53.18295897]
+  inv_compute_anchor_exp_cap:       # shifted_lognormal, was ci80 [0.7, 4.6] (core median 1.7944)
+    dist: shifted_lognormal
+    ci80: [1.120760943, 2.873048013]
+  parallel_penalty:                 # beta, was alpha=3 beta=3 on [0,1]: ci80 [0.2466, 0.7534] -> [0.3733, 0.6267]
+    dist: beta
+    alpha: 12.62341788
+    beta: 12.62341788
+
+  # --- coding automation ---
+  swe_multiplier_at_present_day:    # shifted_lognormal, was ci80 [0.25, 4] (core median 1)
+    dist: shifted_lognormal
+    ci80: [0.5, 2.0]
+  coding_automation_efficiency_slope:  # lognormal, was ci80 [1, 9] (median 3)
+    dist: lognormal
+    ci80: [1.732050808, 5.196152423]
+  max_serial_coding_labor_multiplier:  # lognormal, was ci80 [1e4, 1e12] (median 1e8)
+    dist: lognormal
+    ci80: [1e6, 1e10]
+  automation_logistic_asymptote:    # shifted_lognormal, was ci80 [0.005, 2] (core median 0.1)
+    dist: shifted_lognormal
+    ci80: [0.02236067977, 0.4472135955]
+
+  # --- research taste ---
+  ai_research_taste_at_coding_automation_anchor_sd:  # normal, was ci80 [-3, 3] (median 0)
+    dist: normal
+    ci80: [-1.5, 1.5]
+  ai_research_taste_slope:          # lognormal, was ci80 [1.161124383, 10.45011945] (median 3.4834, URL arts)
+    dist: lognormal
+    ci80: [2.011126425, 6.033379277]
+  median_to_top_taste_multiplier:   # shifted_lognormal, was ci80 [1.154662217, 15.87660549] (full median 5.2816, URL mttm)
+    dist: shifted_lognormal
+    ci80: [2.223466700, 8.244835190]
+  taste_limit:                      # lognormal, was ci80 [4, 64] (median 16)
+    dist: lognormal
+    ci80: [8.0, 32.0]
+  taste_limit_smoothing:            # beta, was alpha=2 beta=2 on [0.001, 0.999]: ci80 [0.1964, 0.8036] -> [0.3482, 0.6518]
+    dist: beta
+    alpha: 8.701147569
+    beta: 8.701147569
+
+  # --- software progress & milestone translation ---
+  software_progress_rate_at_reference_year:  # lognormal, was ci80 [0.4, 2.5] (median 1)
+    dist: lognormal
+    ci80: [0.6324555320, 1.5811388301]
+  ted_ai_m2b:                       # lognormal, was ci80 [0.411999, 5.769043] (median 1.5417, URL tam)
+    dist: lognormal
+    ci80: [0.796981179, 2.982303735]

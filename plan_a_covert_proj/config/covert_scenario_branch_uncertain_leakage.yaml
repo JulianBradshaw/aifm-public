@@ -1,0 +1,16 @@
+# Covert config — UNCERTAIN-LEAKAGE variant.
+#
+# Inherits EVERYTHING from covert_scenario_branch.yaml (the pinned scenario values, and
+# via it the base covert_uncertain.yaml's detection_grids and silver bullet) and overrides
+# ONLY the one knob this variant varies: frac_stolen (the espionage "leakage") — back to
+# the base's elicited beta. Edit shared values up the chain, not here.
+parent: covert_scenario_branch.yaml
+
+covert_parameters:
+  # Espionage reach — the fraction of the legal project's algorithmic progress the covert
+  # siphons. UNCERTAIN here: beta on [0,1] fit to an 80% CI (median ≈ 0.67).
+  frac_stolen:
+    dist: beta
+    ci80: [0.36, 0.90]   # median ≈ 0.67
+    min: 0.0
+    max: 1.0

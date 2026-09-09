@@ -1,0 +1,16 @@
+{
+  "id": "eli-12-29-25",
+  "forecaster": "Eli",
+  "date": "12-29-25",
+  "customIdentifier": null,
+  "sourceRunDir": "/root/ai-futures-calculator-1/outputs/results_20251229_051149/eli/20251229_051149",
+  "modelVersion": "1.1",
+  "exportedAt": "2025-12-29T05:26:34.577928",
+  "numSamples": 10000,
+  "presentDay": 2025.9,
+  "timeRange": [
+    2017.0,
+    2200.0
+  ],
+  "seed": 42
+}

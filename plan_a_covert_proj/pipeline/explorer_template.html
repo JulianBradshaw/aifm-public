@@ -1,0 +1,349 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Covert Project — Trajectory Explorer</title>
+<style>
+  :root{
+    --cream:#FFFEF8; --panel:#FBF9F1; --ink:#1a2230; --muted:#8a8678;
+    --line:#e4dfd0; --grid:#ece7da;
+    --legal:#1f4e9c; --lose:#a23b3b; --win:#5f7d1f; --amber:#c8862b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--cream); color:var(--ink);
+    font-family:"Courier New","Courier",monospace;
+    font-size:13px; line-height:1.45; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{margin:0; text-wrap:balance; font-weight:700}
+  .app{display:flex; flex-direction:column; height:100vh}
+  header{
+    padding:14px 20px 12px; border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:baseline; gap:20px; flex-wrap:wrap;
+  }
+  header h1{font-size:18px; letter-spacing:.04em}
+  header .sub{color:var(--muted); font-size:11.5px; letter-spacing:.02em}
+  .stat{display:flex; gap:18px; align-items:baseline}
+  .stat b{font-size:21px; color:var(--amber)}
+  .stat .lbl{color:var(--muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.08em}
+  main{display:grid; grid-template-columns:248px 1fr 322px; flex:1; min-height:0}
+  @media (max-width:1150px){ main{grid-template-columns:200px 1fr 270px} }
+  .pane{min-height:0; display:flex; flex-direction:column}
+  .pane.list{border-right:1px solid var(--line)}
+  .pane.detail{border-left:1px solid var(--line); background:var(--panel)}
+  .controls{padding:10px 12px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px}
+  .seg{display:flex; gap:0; border:1px solid var(--line); border-radius:2px; overflow:hidden}
+  .seg button{flex:1; background:transparent; border:0; padding:5px 4px; font:inherit; font-size:11px;
+    color:var(--muted); cursor:pointer; letter-spacing:.03em}
+  .seg button[aria-pressed="true"]{background:var(--ink); color:var(--cream)}
+  .row-sort{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted)}
+  select{font:inherit; font-size:11px; background:var(--cream); border:1px solid var(--line);
+    color:var(--ink); padding:3px 4px; border-radius:2px; flex:1}
+  .rows{overflow-y:auto; flex:1}
+  .traj-row{display:grid; grid-template-columns:46px 1fr auto; gap:8px; align-items:center;
+    padding:5px 12px; cursor:pointer; border-bottom:1px solid #f1ecdf; white-space:nowrap}
+  .traj-row:hover{background:#f3eede}
+  .traj-row[aria-selected="true"]{background:#fbeccd; box-shadow:inset 3px 0 0 var(--amber)}
+  .traj-row .id{color:var(--muted); font-size:11px}
+  .pill{font-size:10px; padding:1px 7px; border-radius:9px; letter-spacing:.04em; font-weight:700}
+  .pill.win{background:#e9f0d6; color:#46600f}
+  .pill.lose{background:#f6e2df; color:#8e2f28}
+  .lead{font-variant-numeric:tabular-nums; font-size:11.5px}
+  .lead.pos{color:var(--win)} .lead.neg{color:var(--lose)}
+  .plotwrap{position:relative; flex:1; min-height:0}
+  canvas{display:block; width:100%; height:100%}
+  .legend{position:absolute; top:10px; right:14px; background:rgba(255,254,248,.9);
+    border:1px solid var(--line); border-radius:3px; padding:7px 9px; font-size:10.5px; line-height:1.7}
+  .legend .sw{display:inline-block; width:14px; height:3px; vertical-align:middle; margin-right:6px}
+  #tip{position:absolute; pointer-events:none; background:var(--ink); color:var(--cream);
+    font-size:10.5px; padding:3px 7px; border-radius:3px; opacity:0; transform:translate(-50%,-130%); white-space:nowrap}
+  .detail-body{overflow-y:auto; padding:14px 16px; flex:1}
+  .detail h2{font-size:15px; display:flex; align-items:center; gap:9px}
+  .empty{color:var(--muted); padding:40px 16px; text-align:center; font-size:12px}
+  .scalars{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line);
+    border:1px solid var(--line); border-radius:3px; margin:14px 0; overflow:hidden}
+  .scalars div{background:var(--panel); padding:6px 9px}
+  .scalars .k{color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.06em}
+  .scalars .v{font-size:14px; font-variant-numeric:tabular-nums}
+  .sec-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted);
+    margin:18px 0 9px; border-bottom:1px solid var(--line); padding-bottom:5px}
+  .param{margin-bottom:13px}
+  .param .top{display:flex; justify-content:space-between; gap:8px; align-items:baseline}
+  .param .pname{font-size:11.5px; word-break:break-word}
+  .param .pval{font-variant-numeric:tabular-nums; font-size:12px; color:var(--ink)}
+  .param .ptag{font-size:10px; padding:0 5px; border-radius:8px; font-weight:700; margin-left:6px}
+  .bar{position:relative; height:9px; margin-top:5px; background:#efe9da; border-radius:5px}
+  .bar .band{position:absolute; top:0; bottom:0; background:#ded6c2; border-radius:5px}
+  .bar .mark{position:absolute; top:-2px; width:3px; height:13px; border-radius:2px; transform:translateX(-50%)}
+  .bar .mid{position:absolute; left:50%; top:0; bottom:0; width:1px; background:#c7bfa9}
+  .pctips{display:flex; justify-content:space-between; font-size:9px; color:var(--muted); margin-top:2px}
+  .hint{color:var(--muted); font-size:11px; padding:0 12px 10px}
+</style>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>Covert Project · Trajectory Explorer</h1>
+      <div class="sub" id="runinfo"></div>
+    </div>
+    <div class="stat">
+      <div><div class="lbl">Runs</div><b id="s-n"></b></div>
+      <div><div class="lbl">Covert wins</div><b id="s-win"></b></div>
+    </div>
+  </header>
+  <main>
+    <section class="pane list">
+      <div class="controls">
+        <div class="seg" id="filter">
+          <button data-f="all" aria-pressed="true">All</button>
+          <button data-f="win">Wins</button>
+          <button data-f="lose">Losses</button>
+        </div>
+        <div class="row-sort">
+          sort
+          <select id="sort">
+            <option value="lead">covert lead (desc)</option>
+            <option value="gap">AC→TED gap (asc)</option>
+            <option value="jump">AC→TED jump (desc)</option>
+            <option value="slip">legal slip (desc)</option>
+            <option value="id">run id</option>
+          </select>
+        </div>
+      </div>
+      <div class="rows" id="rows"></div>
+    </section>
+
+    <section class="pane">
+      <div class="plotwrap">
+        <canvas id="plot"></canvas>
+        <div class="legend">
+          <div><span class="sw" style="background:#5f7d1f"></span>covert (wins)</div>
+          <div><span class="sw" style="background:#a23b3b"></span>covert (loses)</div>
+          <div><span class="sw" style="background:#1f4e9c"></span>legal consortium</div>
+        </div>
+        <div id="tip"></div>
+      </div>
+      <div class="hint">% of the way (in effective-compute OOMs) from the pause level (0%) to ASI (100%). Hover a line or click a run on the left.</div>
+    </section>
+
+    <section class="pane detail">
+      <div class="detail-body" id="detail">
+        <div class="empty">Select a run to inspect its trajectory and its most unusual parameters.</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+</script>
+<script>
+(function(){
+  const M = DATA.meta, PS = DATA.pstats, R = DATA.records;
+  const C = {legal:"#1f4e9c", lose:"#a23b3b", win:"#5f7d1f", amber:"#c8862b", grid:"#ece7da", muted:"#8a8678", ink:"#1a2230"};
+  let selected = null, hovered = null, filter = "all", sortKey = "lead";
+
+  document.getElementById("s-n").textContent = M.n;
+  document.getElementById("s-win").textContent = Math.round(M.win_frac*100)+"%";
+  const k = M.knobs;
+  const sizeStr = (k.total_h100e_frac != null)
+    ? `${(k.total_h100e_frac*100).toFixed(2)}% of frontier R&D compute at pause (fixed reduction)`
+    : `${(k.total_h100e/1e3)}k H100e (fixed absolute)`;
+  document.getElementById("runinfo").textContent =
+    `legal_mode=${M.legal_mode} · covert = ${sizeStr} · steals ${Math.round(k.frac_stolen*100)}% · `+
+    `${k.alignment_tax_ooms}-OOM tax · ${k.dormancy_years}y dormant + ${k.construction_years ?? 0}y build · pause ${k.legal_scaling_duration}y deal horizon`;
+
+  // ---------- list ----------
+  const rowsEl = document.getElementById("rows");
+  function sortedFiltered(){
+    let rs = R.filter(r => filter==="all" || (filter==="win")===r.win);
+    const cmp = {
+      lead:(a,b)=>(b.lead??-1e9)-(a.lead??-1e9),
+      gap:(a,b)=>(a.gap??1e9)-(b.gap??1e9),
+      jump:(a,b)=>(b.jump??-1e9)-(a.jump??-1e9),
+      slip:(a,b)=>(b.slip??-1e9)-(a.slip??-1e9),
+      id:(a,b)=>a.id-b.id,
+    }[sortKey];
+    return rs.sort(cmp);
+  }
+  function fmt(x,d=2){return x==null?"—":x.toFixed(d);}
+  function renderList(){
+    const rs = sortedFiltered();
+    rowsEl.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    for(const r of rs){
+      const div = document.createElement("div");
+      div.className = "traj-row"; div.dataset.id = r.id;
+      div.setAttribute("aria-selected", selected===r.id);
+      const leadCls = (r.lead??0)>=0 ? "pos":"neg";
+      div.innerHTML =
+        `<span class="id">#${r.id}</span>`+
+        `<span class="pill ${r.win?"win":"lose"}">${r.win?"WIN":"LOSE"}</span>`+
+        `<span class="lead ${leadCls}">${r.lead==null?"∞":(r.lead>=0?"+":"")+fmt(r.lead,1)+"y"}</span>`;
+      div.onclick = ()=>select(r.id);
+      frag.appendChild(div);
+    }
+    rowsEl.appendChild(frag);
+  }
+  document.getElementById("filter").onclick = (e)=>{
+    const b = e.target.closest("button"); if(!b) return;
+    filter = b.dataset.f;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute("aria-pressed", x===b));
+    renderList();
+  };
+  document.getElementById("sort").onchange = (e)=>{ sortKey=e.target.value; renderList(); };
+
+  // ---------- plot ----------
+  const cv = document.getElementById("plot"), ctx = cv.getContext("2d");
+  const tip = document.getElementById("tip");
+  let W=0,H=0,dpr=1;
+  const PAD = {l:52,r:16,t:14,b:34};
+  const YLO=-8, YHI=118;
+  function xs(yr){ return PAD.l + (yr-M.x_lo)/(M.x_hi-M.x_lo)*(W-PAD.l-PAD.r); }
+  function ys(p){ return PAD.t + (1-(p-YLO)/(YHI-YLO))*(H-PAD.t-PAD.b); }
+
+  function resize(){
+    const r = cv.parentElement.getBoundingClientRect();
+    dpr = window.devicePixelRatio||1;
+    W = r.width; H = r.height;
+    cv.width = W*dpr; cv.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    draw();
+  }
+  function gridAndAxes(){
+    ctx.clearRect(0,0,W,H);
+    ctx.font = "10px 'Courier New',monospace"; ctx.textBaseline="middle";
+    // y reference lines
+    const refs=[[0,"pause (0%)"],[100,"ASI (100%)"]];
+    ctx.strokeStyle="#d9d2c0"; ctx.fillStyle=C.muted; ctx.lineWidth=1;
+    for(const[p,lbl] of refs){ const y=ys(p);
+      ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+      ctx.textAlign="left"; ctx.fillText(lbl, PAD.l+4, y-6);
+    }
+    // y ticks
+    ctx.fillStyle=C.muted; ctx.textAlign="right";
+    for(let p=0;p<=100;p+=25){ const y=ys(p);
+      ctx.fillText(p+"%", PAD.l-6, y);
+      ctx.strokeStyle=C.grid; ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+    }
+    // TED-AI median dotted
+    const yt=ys(M.ted_pct_med);
+    ctx.save(); ctx.setLineDash([3,3]); ctx.strokeStyle="#b9b09a";
+    ctx.beginPath(); ctx.moveTo(PAD.l,yt); ctx.lineTo(W-PAD.r,yt); ctx.stroke(); ctx.restore();
+    ctx.fillStyle=C.muted; ctx.textAlign="left"; ctx.fillText("TED-AI (median)", PAD.l+4, yt-6);
+    // x ticks
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    const step = (M.x_hi-M.x_lo)>30?10:5;
+    const y0 = H-PAD.b;
+    for(let yr=Math.ceil(M.x_lo/step)*step; yr<=M.x_hi; yr+=step){ const x=xs(yr);
+      ctx.strokeStyle=C.grid; ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,y0); ctx.stroke();
+      ctx.fillStyle=C.muted; ctx.fillText(yr, x, y0+5);
+    }
+    ctx.strokeStyle="#cfc7b3"; ctx.beginPath();
+    ctx.moveTo(PAD.l,PAD.t); ctx.lineTo(PAD.l,y0); ctx.lineTo(W-PAD.r,y0); ctx.stroke();
+    ctx.save(); ctx.translate(13,(PAD.t+y0)/2); ctx.rotate(-Math.PI/2);
+    ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillStyle=C.muted;
+    ctx.fillText("percent of the way from pause to ASI", 0,0); ctx.restore();
+  }
+  function poly(t,p,color,alpha,wd){
+    if(!t.length) return;
+    ctx.strokeStyle=color; ctx.globalAlpha=alpha; ctx.lineWidth=wd;
+    ctx.beginPath();
+    for(let i=0;i<t.length;i++){ const x=xs(t[i]), y=ys(Math.max(YLO,Math.min(YHI,p[i])));
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.stroke(); ctx.globalAlpha=1;
+  }
+  function draw(){
+    gridAndAxes();
+    const a = Math.max(0.015, Math.min(0.07, 25/M.n));
+    // faint background: legal then covert
+    for(const r of R){ if(r.id===selected) continue; poly(r.lt,r.lp,C.legal,a*0.8,0.6); }
+    for(const r of R){ if(r.id===selected) continue; poly(r.ct,r.cp, r.win?C.win:C.lose, a, 0.7); }
+    if(hovered!=null && hovered!==selected){ const r=byId(hovered);
+      poly(r.lt,r.lp,C.legal,0.5,1.3); poly(r.ct,r.cp, r.win?C.win:C.lose,0.7,1.6); }
+    if(selected!=null){ const r=byId(selected);
+      poly(r.lt,r.lp,C.legal,1,2.6);
+      poly(r.ct,r.cp, r.win?C.win:C.lose,1,2.8);
+      // endpoint dots at TED/target crossing
+      ctx.fillStyle=C.amber;
+      if(r.covt!=null){ const x=xs(r.covt),y=ys(M.ted_pct_med); ctx.beginPath();ctx.arc(x,y,3.5,0,7);ctx.fill(); }
+    }
+  }
+  const byId = (id)=>R[idIndex[id]];
+  const idIndex = {}; R.forEach((r,i)=>idIndex[r.id]=i);
+
+  // hover: nearest covert polyline
+  cv.onmousemove = (e)=>{
+    const rect = cv.getBoundingClientRect(), mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    let best=null, bd=1e9;
+    for(const r of R){ const t=r.ct,p=r.cp;
+      for(let i=0;i<t.length;i++){ const dx=xs(t[i])-mx, dy=ys(p[i])-my, d=dx*dx+dy*dy;
+        if(d<bd){bd=d; best=r.id;} } }
+    if(bd<260){ if(hovered!==best){hovered=best; draw();}
+      const r=byId(best);
+      tip.style.opacity=1; tip.style.left=mx+"px"; tip.style.top=my+"px";
+      tip.textContent=`#${r.id} · ${r.win?"win":"lose"} · lead ${r.lead==null?"∞":(r.lead>=0?"+":"")+r.lead+"y"}`;
+      cv.style.cursor="pointer";
+    } else if(hovered!=null){ hovered=null; tip.style.opacity=0; cv.style.cursor="default"; draw(); }
+  };
+  cv.onmouseleave = ()=>{ if(hovered!=null){hovered=null; draw();} tip.style.opacity=0; };
+  cv.onclick = ()=>{ if(hovered!=null) select(hovered); };
+
+  // ---------- detail ----------
+  function ptag(pct){
+    const d=Math.abs(pct-50);
+    if(d>=40) return ["extreme","#8e2f28","#f6e2df"];
+    if(d>=25) return ["unusual","#9a6512","#f6ecd5"];
+    return ["typical","#5b6b3a","#e9f0d6"];
+  }
+  function paramRow(u){
+    const st = PS[u.k]; if(!st) return "";
+    const span = (st.max-st.min)||1;
+    const toX = (v)=>Math.max(0,Math.min(100,(v-st.min)/span*100));
+    const bandL=toX(st.p10), bandR=toX(st.p90), mk=toX(u.v);
+    const [tag,fg,bg]=ptag(u.pct);
+    const mc = Math.abs(u.pct-50)>=40?C.lose:(Math.abs(u.pct-50)>=25?C.amber:C.win);
+    return `<div class="param">
+      <div class="top">
+        <span class="pname">${u.k}</span>
+        <span><span class="pval">${u.v}</span><span class="ptag" style="color:${fg};background:${bg}">p${u.pct} ${tag}</span></span>
+      </div>
+      <div class="bar">
+        <div class="band" style="left:${bandL}%;right:${100-bandR}%"></div>
+        <div class="mid"></div>
+        <div class="mark" style="left:${mk}%;background:${mc}"></div>
+      </div>
+      <div class="pctips"><span>${(+st.min).toPrecision(3)}</span><span>median ${(+st.median).toPrecision(3)}</span><span>${(+st.max).toPrecision(3)}</span></div>
+    </div>`;
+  }
+  function renderDetail(){
+    const el = document.getElementById("detail");
+    if(selected==null){ el.innerHTML='<div class="empty">Select a run to inspect its trajectory and its most unusual parameters.</div>'; return; }
+    const r = byId(selected);
+    const sc = [
+      ["AC year", fmt(r.ac)],["TED-AI year", fmt(r.ted)],
+      ["AC→TED gap", r.gap==null?"—":r.gap+" y"],["AC→TED jump", r.jump+" OOM"],
+      ["covert → TED-AI", r.covt==null?"never":fmt(r.covt)],["legal → target", fmt(r.legt)],
+      ["covert lead", r.lead==null?"∞ behind":(r.lead>=0?"+":"")+fmt(r.lead,1)+" y"],
+      ["legal slip", r.slip==null?"—":(r.slip>0.05?"+"+fmt(r.slip,1)+" y":"on time")],
+      ["legal HW ramp", r.hw==null?"—":fmt(r.hw,3)+" OOM/y"+(r.hw<0.495?" (throttled)":" (cap)")],
+      ["legal SW rate", r.sw==null?"—":fmt(r.sw,3)+" OOM/y"],
+    ];
+    el.innerHTML =
+      `<div class="detail"><h2>Run #${r.id}<span class="pill ${r.win?"win":"lose"}">${r.win?"COVERT WINS":"COVERT LOSES"}</span></h2></div>`+
+      `<div class="scalars">${sc.map(([k,v])=>`<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join("")}</div>`+
+      `<div class="sec-label">Most unusual parameters (vs the ${M.n}-run distribution)</div>`+
+      r.unusual.map(paramRow).join("");
+  }
+
+  function select(id){
+    selected=id;
+    [...rowsEl.children].forEach(c=>c.setAttribute("aria-selected", +c.dataset.id===id));
+    const sel = rowsEl.querySelector('[aria-selected="true"]');
+    if(sel) sel.scrollIntoView({block:"nearest"});
+    draw(); renderDetail();
+  }
+
+  renderList(); resize();
+  window.addEventListener("resize", resize);
+})();
+</script>

@@ -1,0 +1,6 @@
+# Alias of the base uncertain config: bottom-up covert sizing (covert-AI-projects
+# supplement §2.3 Method #1) + elicited-uncertain per-site power and leakage are now the
+# BASE (covert_uncertain.yaml), so this file adds nothing. Kept as a stable parent for
+# the covert_bottom_up_* variants and for existing run commands / run hashes' config
+# chains; new configs should parent covert_uncertain.yaml directly.
+parent: covert_uncertain.yaml

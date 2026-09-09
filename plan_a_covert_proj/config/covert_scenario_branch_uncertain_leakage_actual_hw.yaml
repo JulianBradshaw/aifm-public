@@ -1,0 +1,12 @@
+# Covert config — UNCERTAIN-LEAKAGE + ACTUAL-HW variant.
+#
+# Inherits covert_scenario_branch_uncertain_leakage.yaml (so frac_stolen is the beta
+# leakage, and everything else comes from the base). Overrides ONLY legal_strategy: the
+# legal's training compute follows the ACTUAL training_H100e series instead of a chosen
+# hw ramp (hw_rate / max_hw_rate ignored; software still tuned to hit target_year).
+parent: covert_scenario_branch_uncertain_leakage.yaml
+
+covert_parameters:
+  legal_strategy:
+    dist: fixed
+    value: target_year_actual_hw

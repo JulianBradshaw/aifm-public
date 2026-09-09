@@ -1,0 +1,115 @@
+# Daniel's sampling configuration
+# Inherits all settings from sampling_config.yaml and overrides specific parameters
+
+parent: "../../config/sampling_config_daniel.yaml"
+
+# Override global settings if needed
+# Uncomment any of these to override the parent config:
+
+# num_rollouts: 500  # Example: run fewer samples for testing
+# time_range: [2017.0, 2060.0]  # Example: extend simulation end date
+time_range: [2017.0, 2200.0]  # Example: extend simulation end date
+input_data: inputs/input_data.csv   # DEFAULT/counterfactual series (sets AC, pause, milestone targets)
+per_sample_timeout: 30  # Example: increase timeout
+
+# ============================================================================
+# PARAMETER OVERRIDES
+# ============================================================================
+# To override parameters, uncomment the 'parameters:' section below and add
+# the specific parameters you want to change.
+#
+# Example usage:
+#
+# parameters:
+#   present_day:
+#     dist: fixed
+#     value: 2026.0
+#   include_gap:
+#     dist: choice
+#     values: ["no gap", "gap"]
+#     p: [0.3, 0.7]  # 70% chance of gap instead of 55%
+#
+# ============================================================================
+
+parameters:
+  # --- Time horizon & AC ---
+  ac_time_horizon_minutes:
+    dist: fixed
+    value: 1230044.7621793437   # 10**6.089920916003435 (URL acth), ~9.86 work yr
+  horizon_extrapolation_type:
+    dist: fixed
+    value: "decaying doubling time"
+  present_day:
+    dist: fixed
+    value: 2026.0959
+  present_horizon:
+    dist: fixed
+    value: 69.9
+  present_doubling_time:
+    dist: fixed
+    value: 0.3328402169209725
+  doubling_difficulty_growth_factor:
+    dist: fixed
+    value: 0.92
+  include_gap:
+    dist: fixed
+    value: "gap"
+  gap_years:
+    dist: fixed
+    value: 1.103409   # daniel-04-02-26 override; tuned so default AC = 2030.00 on the updated input_data.csv series
+
+  # --- Taste (daniel-04-02-26 URL overrides) ---
+  # Takeoff speed. Median anchored to URL arts = 3.4833731503601166; the daniel [1, 9]
+  # CI (k = 3x multiplicative spread) is rescaled to that median:
+  # [3.483373/3, 3.483373*3] = [1.161124, 10.450119].
+  ai_research_taste_slope:
+    dist: lognormal
+    ci80: [1.161124383, 10.45011945]
+    clip_to_bounds: false
+  # Final median anchored to URL mttm = 5.281602094603481; daniel's uncertainty is
+  # kept (shifted_lognormal, shift 1.0, core CI [0.8, 11] => k = sqrt(11/0.8) = 3.708x
+  # multiplicative spread) and re-centered the same way ai_research_taste_slope is:
+  # rescale the core CI so shift + core_median = mttm. core target = 5.281602 - 1.0 =
+  # 4.281602; core CI = [0.8, 11] * (4.281602 / sqrt(0.8*11)) = [1.154662, 15.876605].
+  median_to_top_taste_multiplier:
+    dist: shifted_lognormal
+    ci80: [1.154662217, 15.87660549]
+    shift: 1.0
+    min: 1.01
+    max: 100
+  # Median anchored to URL tam = 1.54170045294956; daniel's [0.2673, 3.742] CI
+  # (median 1, k = 3.742x multiplicative spread) is rescaled to that median:
+  # [1.54170045/3.742, 1.54170045*3.742] = [0.411999, 5.769043].
+  ted_ai_m2b:
+    dist: lognormal
+    ci80: [0.411999, 5.769043]
+    clip_to_bounds: false
+
+# ============================================================================
+# TIME SERIES PARAMETER OVERRIDES
+# ============================================================================
+# To override time series parameters:
+#
+# time_series_parameters:
+#   slowdown_year:
+#     dist: uniform
+#     min: 2024.0
+#     max: 2027.0
+#
+# ============================================================================
+
+# ============================================================================
+# CORRELATION MATRIX OVERRIDE
+# ============================================================================
+# To override the correlation matrix (replaces entire matrix):
+#
+# correlation_matrix:
+#   parameters:
+#     - "present_doubling_time"
+#     - "doubling_difficulty_growth_factor"
+#   correlation_matrix:
+#     - [1.00, 0.50]
+#     - [0.50, 1.00]
+#   correlation_type: "spearman"
+#
+# ============================================================================

@@ -1,0 +1,153 @@
+# Bottom-up covert-compute parameters (ai-2030 covert-AI-projects supplement, §2.3 Method #1).
+#
+# Used ONLY when a covert config sets `compute_mode: bottom_up_estimate` and points at this
+# file via `bottom_up_compute_config:`. Instead of sampling the covert project's compute
+# directly (total_h100e / total_h100e_frac), these knobs are sampled per Monte-Carlo draw and
+# combined (plan_a_covert_proj.sim.bottom_up_covert_fraction) into per-source NATURAL-BASE
+# fractions, which simulate_covert multiplies by world AI compute over the DIVERSION WINDOW
+# (log-interpolated from the input series' world_H100e column) into an absolute covert H100e count.
+#
+# Three diversion strategies are summed, but they have DIFFERENT bases (per the supplement):
+#   1. False decommissioning of pre-deal stock  -> fraction of the world STOCK at the window START
+#                                                  (gated by a feasibility Bernoulli)
+#   2. Concealed domestic (China-designed) prod  -> fraction of the world FLOW over the window
+#                                                  (gated by a feasibility Bernoulli)
+#   3. Diversion of smuggled Western flow        -> fraction of the world FLOW over the window
+#                                                  (always feasible)
+# The diversion window is [declaration - diversion_duration, declaration], declaration = pause -
+# declaration_to_pause_years (see the TIMING section below). This generalizes the supplement's
+# fixed 2028.0/2029.0 anchors so the window tracks each rollout's pause.
+#
+# Distributions reuse the standard sampler (fixed, uniform, normal, lognormal,
+# shifted_lognormal, beta, choice). normal/lognormal/beta accept ci80: [p10, p90]. Feasibility
+# Bernoullis are encoded as choice with values [1, 0] (1 = feasible). The supplement gives some
+# fractions as median+p90 rather than an 80% CI; those are encoded as best-fit ci80 with the
+# supplement's stated numbers noted in comments.
+
+bottom_up_compute_parameters:
+
+  # ===== Source 1: false decommissioning -> fraction of world STOCK at window start =========
+  # Feasible at all to do deniably? (supplement: intuitive 60%)
+  decommission_feasible:
+    dist: choice
+    values: [1, 0]
+    p: [0.60, 0.40]
+  # Fraction of US-designed compute in China that can be falsely decommissioned,
+  # conditional on feasibility (supplement: "15%–30%", fit to a beta). Encoded as the 80% CI.
+  decommission_frac:
+    dist: beta
+    ci80: [0.15, 0.30]
+    min: 0.0
+    max: 1.0
+  # China's share of WORLD AI compute stock (supplement: 6.7% on Chinese soil at 2028.0); treated
+  # as a time-invariant composition ratio applied to the world stock at the window start.
+  prc_stock_frac_world_2028:
+    dist: fixed
+    value: 0.067
+  # China-designed (domestic) compute as a share of WORLD AI compute (supplement: 3.7%). Single
+  # anchor for the China-supply numbers — bottom_up_covert_fraction derives:
+  #   us_designed_frac_china = 1 - china_domestic_frac_world / prc_stock_frac_world_2028  (~0.45)
+  # used for the decommissioning stock fraction; it is ALSO China's share of the world FLOW used by
+  # the concealed-domestic source (treated as the same composition ratio for stock and flow).
+  china_domestic_frac_world:
+    dist: fixed
+    value: 0.037
+
+  # ===== Source 2: concealed domestic production -> fraction of world FLOW over window =======
+  # Feasible to conceal domestic production at all? 25% (supplement's published table says
+  # intuitive 15%; raised to 25% per Brendan, 2026-07-05).
+  domestic_feasible:
+    dist: choice
+    values: [1, 0]
+    p: [0.25, 0.75]
+  # Fraction of China's domestic production concealable, conditional on feasibility
+  # (supplement: median 7%, p90 15%, beta). Encoded as best-fit 80% CI (p10≈2%) for median≈7%/p90≈15%.
+  # Applied to China's share (china_domestic_frac_world) of the world FLOW produced over the window.
+  domestic_concealable_frac:
+    dist: beta
+    ci80: [0.02, 0.15]
+    min: 0.0
+    max: 1.0
+
+  # ===== Source 3: diversion of smuggled Western flow -> fraction of world FLOW over window ==
+  # Fraction of compute sales smuggled to China (supplement: 3.2%, 80% CI [1.06%, 9.6%], LogNormal).
+  # Shifted down to a 2.0% median (supplement spread preserved: same p90/p10 ratio ~9.06).
+  smuggled_frac:
+    dist: lognormal
+    ci80: [0.0066, 0.0602]
+    min: 0.0
+    max: 1.0
+  # Fraction of smuggled compute whose end customer cannot be identified
+  smuggled_unidentifiable_frac:
+    dist: beta
+    ci80: [0.025, 0.70]
+    min: 0.0
+    max: 1.0
+
+  # ===== Facility POWER (supplement §3.3: "How much datacenter capacity does the
+  # diverted compute require?") ================================================
+  # Per-source facility W/H100e is derived from these + the diversion window
+  # (sim.bottom_up_facility_w_per_h100e) and sets the covert's detection-relevant MW:
+  #   w_US(year) = it_w_per_h100e_2026 / power_efficiency_per_year^(year - 2026)
+  #   smuggled       = w_US(window midpoint + smuggled_proxy_offset_years) * peak_pue
+  #   decommissioned = w_US(window start - decommissioned_age_years) * peak_pue
+  #   domestic       = smuggled * domestic_efficiency_gap
+  # With the supplement's [2028, 2029] window these reproduce its 1 GW capacities:
+  # 1.9M H100e smuggled / ~1M decommissioned / 525k domestic.
+
+  # US IT power per H100e at max utilization, 2026.0 (supplement: DGX GB200 SuperPOD
+  # reference architecture — 1.2 MW per Scalable Unit of 8 NVL72 servers, / (2.5 * 72)).
+  it_w_per_h100e_2026:
+    dist: fixed
+    value: 833
+  # Average US power-efficiency progress per year (supplement: (1.3*1.4*1.4)^(1/3) from
+  # the Plan A side panel data, 2026.0-2028.0).
+  power_efficiency_per_year:
+    dist: fixed
+    value: 1.37
+  # Smuggled-chip proxy year = diversion-window MIDPOINT + this (supplement: 2028.6 for the
+  # [2028, 2029] window — "adjusted forward slightly to account for the value of an
+  # exponential at the midpoint underestimating its average").
+  smuggled_proxy_offset_years:
+    dist: fixed
+    value: 0.1
+  # Decommissioned-chip proxy year = diversion-window START - this (supplement: 2026.5 —
+  # the falsely-decommissioned stock is older, but skews toward newer chips since the
+  # quantity grows 2-4x/yr).
+  decommissioned_age_years:
+    dist: fixed
+    value: 1.5
+  # Chinese domestic power-efficiency gap during the diversion period: Chinese-designed
+  # chips draw this many times more W per H100e than contemporaneous US chips
+  # (supplement: between the two relevant Plan A side panel cells).
+  domestic_efficiency_gap:
+    dist: fixed
+    value: 3.7
+  # Covert datacenter peak PUE: facility power / IT power at max utilization (supplement:
+  # Epoch's 1.4; "should maybe be adjusted upward because it's a covert datacenter").
+  peak_pue:
+    dist: fixed
+    value: 1.4
+
+  # ===== Diversion TIMING (relative to each rollout's pause) =================
+  # The absolute covert compute = diverted_fraction x (world compute PRODUCED during the diversion
+  # window). The window ends at the compute declaration (books close) and runs back diversion_duration:
+  #     [declaration_time - diversion_duration, declaration_time],  declaration_time = pause - gap.
+  # This lets China divert LATER than the supplement's fixed 2028.0 anchor (the window tracks the
+  # pause) and lets a longer scheme divert more (the fractions above are unchanged; the timing sets
+  # which slice of world compute they apply to).
+  #
+  # Gap between the compute declaration (~Jan 1) and the pause start (~Mar 1). FIXED for now.
+  # Sets the window END = pause - declaration_to_pause_years.
+  declaration_to_pause_years:
+    dist: fixed
+    value: 0.1616           # Jan 1 -> Mar 1 (~59 days)
+  # How long the covert diversion ran (the window length). It sets the FLOW window for smuggling +
+  # concealed-domestic (world compute produced over [declaration - duration, declaration]) and the
+  # START STOCK for decommissioning (world stock at declaration - duration). A longer window => more
+  # flow diverted AND an earlier (smaller) start stock for decommissioning. ~1 year is on the high
+  # end (conditional on China going covert); with the ~1yr default the window is ~[2028, 2029] for a
+  # 2029.2 pause, matching the supplement's anchors.
+  diversion_duration:
+    dist: fixed
+    value: 1.0              # 1 year (high end)

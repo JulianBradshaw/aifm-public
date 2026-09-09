@@ -1,0 +1,24 @@
+# Covert config — the SCENARIO BRANCH: a specialization of the base uncertain config
+# (covert_uncertain.yaml) with the elicited-uncertain covert knobs PINNED to their central
+# scenario values. Everything else — the bottom-up compute sizing, detection grids, silver
+# bullet, and all the fixed knobs — inherits from the base; edit shared values there, not
+# here. (The bottom-up diversion parameters in covert_compute_bottom_up.yaml are still
+# sampled per draw; this pins only the directly-specified covert knobs.)
+#
+# This is the pipeline's default --covert-config:
+#
+#   python -m plan_a_covert_proj.pipeline.run --num 500
+parent: covert_uncertain.yaml
+
+covert_parameters:
+  # SCENARIO: a single ~300 MW facility (n≈1 at the median ~300 MW total covert power),
+  # instead of the base's elicited cdf_points distribution (median ~215 MW).
+  optimal_site_mw:
+    dist: fixed
+    value: 300
+
+  # SCENARIO: espionage reach pinned at the elicited median (~0.67) instead of the
+  # base's beta distribution.
+  frac_stolen:
+    dist: fixed
+    value: 0.67

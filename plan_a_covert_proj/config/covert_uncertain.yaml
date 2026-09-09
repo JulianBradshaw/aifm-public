@@ -1,0 +1,301 @@
+# Covert-project experiment configuration — the BASE config (plan_a_covert_proj).
+#
+# This is the ROOT of the covert-config inheritance tree: the full knob set with the
+# elicited UNCERTAIN distributions (bottom-up covert sizing, uncertain per-site power and
+# leakage), plus the detection grids and the silver bullet. Scenario variants inherit
+# from it via `parent:` — in particular covert_scenario_branch.yaml, which pins the
+# uncertain knobs to their central scenario values.
+#
+# Read by the pipeline (plan_a_covert_proj/pipeline/mc.py) and by the standalone
+# scripts/analysis/covert_experiment.py:
+#
+#   python -m plan_a_covert_proj.pipeline.run --num 500 \
+#       --covert-config plan_a_covert_proj/config/covert_uncertain.yaml
+#
+# Parameter categories:
+#   parameters:           model Parameters fields (vary the trajectory / AC & TED-AI timing).
+#                         Empty => model defaults; the pipeline merges model.yaml's richer set.
+#   covert_parameters:    this experiment's own knobs, SAMPLED once per Monte-Carlo draw
+#                         (grouped below: covert project · legal scaling strategy · detection).
+#   time_series_parameters / correlation_matrix: same machinery as batch_rollout (optional).
+#
+# Distributions: fixed, uniform, normal, lognormal, shifted_lognormal, beta, choice,
+# cdf_points (elicited CDF anchors: points = [[value, P(X <= value)], ...], scale: linear|log).
+# normal/lognormal accept ci80: [low, high] (takes precedence over mean/sd | mu/sigma).
+# lognormal mu/sigma are in log space.
+
+# RNG seed for the Monte-Carlo draws (honoured by the pipeline; --seed overrides it).
+seed: 42
+# Plan-A divergence series: the legal/covert follow the DEFAULT series (the model config's
+# input_data, e.g. inputs/input_data.csv) up to each rollout's pause, then THIS series' compute ramp,
+# relativized to the pause (Plan A's shape is taken from the median scenario and slid+scaled to
+# each rollout). Unset => legal/covert stay on the single default series. The model config's
+# input_data, NOT this, drives the default trajectory / AC / pause / milestone targets.
+plan_a_input_data: inputs/plan-a.csv
+# Cap the horizon: the covert race resolves around TED-AI (~few yr after AC), so we
+# don't integrate the meaningless post-takeoff explosion out to 2200. Both endpoints are
+# honoured by the pipeline (this covert time_range takes precedence over the model's).
+time_range: [2017.0, 2100.0]
+
+# Diversion-parameter distributions for the bottom-up covert sizing (repo-relative path;
+# used when compute_mode is "bottom_up_estimate").
+bottom_up_compute_config: plan_a_covert_proj/config/covert_compute_bottom_up.yaml
+
+# ---------------------------------------------------------------------------
+# Model parameters (empty => model defaults; the pipeline merges model.yaml's
+# `parameters:` block to fold model uncertainty into the sweep and enable
+# conditioning on AC time / AC->TED gap).
+# ---------------------------------------------------------------------------
+parameters: {}
+
+# ---------------------------------------------------------------------------
+# Covert knobs — sampled once per Monte-Carlo draw, grouped by what they describe.
+# (Keys are kept flat: the loader reads each entry under covert_parameters as a
+# distribution spec, so the groups below are organisational comments only.)
+# ---------------------------------------------------------------------------
+covert_parameters:
+
+  # ===== The covert project ==================================================
+  # Physical facts about the blacksite: how much compute it has, how power-hungry
+  # that compute is, how long it takes to stand up, and how much it can steal.
+
+  # REQUIRED — how the covert datacenter is sized. No implicit fallback: omitting this
+  # (or giving an unknown value) raises. One of:
+  #   bottom_up_estimate  — total = (sampled diverted fraction of world compute) x world
+  #                         compute over the diversion window (covert-AI-projects
+  #                         supplement §2.3 Method #1; needs bottom_up_compute_config).
+  #   frontier_relative   — total = total_h100e_frac * frontier compute at the pause
+  #                         (holds the covert-vs-frontier reduction constant across worlds)
+  #   absolute            — total = total_h100e (a fixed H100e count, pause-independent)
+  # The unused sizing knobs below are ignored for the chosen mode.
+  compute_mode: # COMPUTE
+    dist: fixed
+    value: bottom_up_estimate
+
+  # Compute scale (absolute): covert datacenter size in total H100e.
+  # Used only when compute_mode is "absolute".
+  total_h100e: # COMPUTE
+    dist: fixed 
+    value: 500000 # NOT USED?
+
+  # Compute scale (frontier-relative): covert R&D compute as a FIXED FRACTION of the
+  # frontier's total compute at the pause. Holds the covert-vs-frontier compute REDUCTION
+  # constant across worlds — removing the confounder that a fixed 500k H100e is a very
+  # different reduction depending on when the pause lands (frontier compute grows over time).
+  # 0.0126 ≈ what 500k was as a share of frontier compute at the median pause.
+  # Used only when compute_mode is "frontier_relative".
+  total_h100e_frac: # COMPUTE
+    dist: fixed
+    value: 0.0126 # NOT USED?
+
+  # Energy efficiency of the compute: facility power draw per H100e (W). Converts the
+  # covert's compute into facility power (MW), size_mw = total_h100e_used * this / 1e6,
+  # which the detection model keys on. Fixed at 600 so 500k H100e = 300 MW.
+  # ONLY used for frontier_relative / absolute sizing: bottom_up_estimate runs derive
+  # per-SOURCE W/H100e from the power parameters in covert_compute_bottom_up.yaml instead
+  # (decommissioned/domestic chips draw more power than smuggled US chips), and record the
+  # mix-weighted effective value in this knob's place.
+  facility_w_per_h100e: # COMPUTE
+    dist: fixed
+    value: 600 # NOT USED?
+
+  # Dormancy: years the covert lies LOW after the pause, before construction even starts
+  # (E frozen; only stolen software accrues). No facility exists yet, so the covert CANNOT
+  # be detected during this window — the detection clock starts when construction begins.
+  # (The AI silver-bullet emergence curve stays anchored on the pause clock; a bullet that
+  # emerged during dormancy bites the moment construction starts.)
+  dormancy_years: # COVERT
+    dist: fixed
+    value: 0 
+
+  # Construction time: years to build the covert datacenter, AFTER the dormancy period
+  # (for training physics the two just run in sequence: E frozen, only stolen software
+  # accrues). The facility is detectable while under construction — the detection
+  # (frailty) clock starts here.
+  construction_years: # COVERT
+    dist: fixed
+    value: 2
+
+  # Espionage reach (leakage): fraction of the legal project's algorithmic progress the
+  # covert steals — both the radical-transparency windfall and ongoing software gains.
+  # Beta on [0,1] fit to the elicited 80% CI (median ≈ 0.67).
+  frac_stolen: # PHYSICS
+    dist: beta
+    ci80: [0.36, 0.90]   # median ≈ 0.67
+    min: 0.0
+    max: 1.0
+
+  # ===== Legal project: post-pause capability-scaling strategy ===============
+  # How the legal consortium chooses to scale toward TED-AI + tax after the deal.
+
+  # Max hardware (training) scaling rate after the pause (OOM/yr).
+  max_hw_rate: # Not used rn
+    dist: fixed
+    value: 0.5 # NOT USED?
+
+  # Scaling duration: years from the END of the setup pause to the legal's target.
+  # target_year = pause + setup_period_years + legal_scaling_duration (kept relative so
+  # it stays well-posed as the pause grid sweeps). This is the window the constant
+  # software-progress rate is active over.
+  legal_scaling_duration: # STRATEGY
+    dist: fixed
+    value: 5
+
+  # REQUIRED — the legal scaling strategy. One of:
+  #   target_year_actual_hw — legal training compute follows the ACTUAL training_H100e
+  #                           series from the input CSV (hw_rate / max_hw_rate ignored);
+  #                           software is still tuned to reach TED-AI + tax at target_year.
+  #   target_year           — tune HW + SW to reach TED-AI + tax at target_year.
+  #   target_year_capped_sw — same as target_year, but cap the TUNED software rate at
+  #                           max_sw_rate OOM/yr (the setup_sw_gain_ooms windfall is
+  #                           exempt). Use max_sw_rate=0 to study a legal project that
+  #                           makes no tuned software progress, so the covert can steal
+  #                           only the windfall.
+  legal_strategy: # STRATEGY
+    dist: fixed
+    value: target_year_actual_hw
+
+  # Legal-project physics mode (the AIFM effort model). One of:
+  #   capped    — legal research effort is clamped at the AIFM physics ceiling (default).
+  #   backsolve — effort is back-solved to hit the target, even if it exceeds the ceiling.
+  # (Was the CLI flag --legal-mode, which still overrides this if passed.)
+  legal_mode: # MECHANICS
+    dist: fixed
+    value: capped 
+
+  # Flat ceiling (OOM/yr) on the legal's tuned software-progress rate. Used only when
+  # legal_strategy is "target_year_capped_sw"; the legal arrives late if this cap is
+  # too low to hit target_year. Does NOT cap the setup windfall.
+  max_sw_rate: # Not used rn
+    dist: fixed
+    value: 0.0 # NOT USED
+
+  # Alignment tax: research the legal must spend on alignment instead of capability,
+  # in 2025-PROGRESS-YEARS (a stock). Converted to OOMs per rollout via the anchor
+  # progress rate (tax_OOMs = this × anchor_progress_rate). The discovered glidepath
+  # reaches TED-AI + tax_OOMs; the used (deployed) glidepath reaches bare TED-AI.
+  # 0 => symmetric race.
+  alignment_tax_progress_years: # STRATEGY
+    dist: fixed
+    value: 0.6 # TODO ADD UNCERTAINTY??
+
+  # Post-scaling externalities: once the legal project has ACTUALLY reached its target
+  # (TED-AI + tax on the discovered glidepath — possibly later than target_year if the
+  # ceiling binds), it keeps DISCOVERING software efficiency at this flat rate (OOM/yr), an
+  # unavoidable capabilities side-effect of ongoing alignment research. None of it is
+  # deployed and no further training happens (TSP frozen) — it only inflates the discovered
+  # research stock, which the covert steals at frac_stolen exactly like the normal discovered
+  # software. 0 => the legal simply sits after reaching its target.
+  post_scaling_externalities_rate:
+    dist: fixed
+    value: 0.25 # TODO ADD UNCERTAINTY??
+
+  # Mandatory minimum software during the scaling phase: software efficiency grows at AT LEAST
+  # this fraction of the TSP (hardware) growth rate, on BOTH the used and discovered tracks,
+  # regardless of the AIFM effort ceiling (a guaranteed floor like the transparency windfall).
+  min_sw_frac_of_tsp:
+    dist: fixed
+    value: 0.2 # TODO ADD UNCERTAINTY??
+
+  # Pause lead: how many years BEFORE the default project would reach AC the deal lands.
+  # The pause starts at pause_year = (default AC time) − years_before_ac, per rollout, so
+  # this anchors the whole scenario's timing. Fixed for now, but distribution-capable
+  # (give it a dist to make the pause-lead uncertain across the Monte Carlo). (Was the CLI
+  # flag --years-before-ac, which still overrides this if passed.)
+  years_before_ac:
+    dist: fixed
+    value: 0.838
+
+  # Training-R&D pause length after the deal (the "six-month pause"). Training is
+  # frozen for this window; the policy ramp resumes after it.
+  setup_period_years:
+    dist: fixed
+    value: 0.838 # (365-59)/365, where 59 is the days from Jan 1 to March 1.
+
+  # Radical-transparency windfall: algorithmic progress accrued smoothly during the
+  # pause from labs pooling algorithms publicly, in 2025-PROGRESS-MONTHS (a stock).
+  # Converted to OOMs per rollout: windfall_OOMs = this/12 × anchor_progress_rate.
+  # The covert steals a frac_stolen share of it. 0 => no windfall.
+  setup_sw_gain_progress_months:
+    dist: fixed
+    value: 4
+
+  # ===== Detection model =====================================================
+  # How likely the covert is to be caught (the facility power MW it keys on comes
+  # from facility_w_per_h100e in the covert-project section above).
+
+  # Optimal/feasible per-site power (MW) the covert splits its total compute across:
+  # n_sites = total_covert_MW / this, capped at n >= 1. The frailty is interpolated at
+  # this per-site power, so it MUST lie within the detection_grids range below (10–1000
+  # MW), validated at load. Specified directly from the elicitation ("Distribution over
+  # the optimal site size"): each row is [size_mw, P(optimal site <= size_mw)] =
+  # P(>size_mw is infeasible/suboptimal). The CDF is log-interpolated between rows
+  # (median ~215 MW); the 10% of mass below 10 MW and the 20% above 1 GW collapse onto
+  # those endpoints, since the detection grids only support 10-1000 MW.
+  optimal_site_mw:
+    dist: cdf_points
+    scale: log
+    points:
+      - [10, 0.10]      # P(>10 MW infeasible/suboptimal) = 10%
+      - [100, 0.35]     # P(>100 MW infeasible/suboptimal) = 35%
+      - [1000, 0.80]    # P(>1 GW infeasible/suboptimal) = 80%
+    min: 10
+    max: 1000
+    clip_to_bounds: true
+
+# ---------------------------------------------------------------------------
+# Detection elicitation (NOT a sampled covert_parameter — fixed elicited data, so it
+# lives outside covert_parameters). These are the INTERPRETABLE model inputs: experts'
+# best-estimate P(detected | n near-identical sites of this size, GPUs acquired
+# undetected, no silver bullet) at the 3-year and 10-year horizons, per candidate
+# per-site power (MW). From detection-elicitation-full.xlsx (tab 1), via the monorepo
+# apps/covert-detection-model.
+#
+# The opaque gamma-frailty params (pi, thetaC, eta, k) are FIT to these points per size
+# (Nelder-Mead on detection-space SSE; see detection.fit_frailty_from_grids), then
+# interpolated across log10(size). So edit the probabilities here, not fit params.
+# Rows are [n_sites, P(detected by 3y), P(detected by 10y)]; a null entry is skipped.
+# (The covert sim runs a single facility -> n=1; the larger-n rows pin the curve shape.)
+detection_grids:
+  - size_mw: 10
+    rows:
+      - [1,   0.20, 0.26]
+      - [3,   0.25, 0.30]
+      - [10,  0.32, 0.37]
+      - [100, 0.55, 0.75]
+  - size_mw: 100
+    rows:
+      - [1,   0.25, 0.35]
+      - [3,   0.35, 0.40]
+      - [10,  0.45, 0.67]
+      - [100, 0.65, 0.80]
+  - size_mw: 1000
+    rows:
+      - [1,   0.40, 0.50]
+      - [3,   0.45, 0.70]
+      - [10,  0.70, 0.85]
+      - [100, 0.85, 0.90]
+
+# ---------------------------------------------------------------------------
+# AI detection "silver bullet" — a program-level breakthrough (e.g. a universal lie
+# detector / interpretability tool) that, once it emerges, exposes the covert REGARDLESS
+# of its facility signature. Unconditional survival multiplies:
+#   S(t) = (1 - P_silver_bullet(t)) * S_facility_frailty(t).
+#
+# P(emerged by t) is a CEILING-LOGISTIC tied to the LEGAL project's trajectory (the
+# breakthrough is an output of the aligned frontier effort, not the calendar). It is
+# pinned by three fixed probabilities at two trajectory-derived times (t = years after
+# the pause start). Let t_pause_end = end of pause and t_used_ted = legal USED capability
+# -> TED-AI; then:
+#   p_mid_pause_to_ted  P(emerged) at the TIME-MIDPOINT (t_pause_end + t_used_ted)/2  (t0)
+#   p_used_ted_plus_d   P(emerged) at t_used_ted + delta_years                        (t1)
+#   ceiling             asymptotic P as t -> infinity
+# The two anchor TIMES come per-rollout from the legal used->TED-AI crossing; these three
+# probabilities and delta_years are fixed. Requires 0 < p_mid_pause_to_ted < p_used_ted_plus_d
+# < ceiling <= 1 (asserted). If the legal project never reaches TED-AI, there is no silver
+# bullet. Omit the whole block to disable. PLACEHOLDER values — TUNE to your elicitation.
+detection_silver_bullet:
+  p_mid_pause_to_ted: 0.20
+  p_used_ted_plus_d:  0.55
+  delta_years:        2.0
+  ceiling:            0.70

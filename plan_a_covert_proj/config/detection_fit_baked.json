@@ -1,0 +1,25 @@
+{
+  "_comment": "Precomputed detection.fit_detection_model output. Regenerate with pipeline/bake_detection_fit.py whenever detection_grids change (tests/test_detection_baked_fit.py enforces freshness).",
+  "grids_fingerprint": "9fddf7d396017f744616906ff08692768a686ac1d74f6f283e4a42bc4032ff61",
+  "fits": {
+    "10.0": {
+      "pi": 0.0,
+      "thetaC": 13.160642108221607,
+      "eta": 2.3613931499936283,
+      "k": 0.6186168958158482
+    },
+    "100.0": {
+      "pi": 0.0,
+      "thetaC": 6.7815049279210236,
+      "eta": 3.8275477468203705,
+      "k": 1.0556317230139463
+    },
+    "1000.0": {
+      "pi": 0.0,
+      "thetaC": 2.9605695532393543,
+      "eta": 3.509713835316551,
+      "k": 1.0241800970968236
+    }
+  },
+  "r": 0.0006814548644180227
+}

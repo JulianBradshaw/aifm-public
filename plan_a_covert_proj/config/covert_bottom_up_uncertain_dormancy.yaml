@@ -1,0 +1,26 @@
+# Covert config — UNCERTAIN DORMANCY variant (bottom-up sizing).
+#
+# Inherits the standard bottom-up scenario (covert_bottom_up.yaml: bottom-up compute
+# sizing, uncertain site size + leakage, detection_grids, silver bullet) and overrides
+# ONLY the dormancy period: the years the covert lies low after the pause BEFORE starting
+# construction. During dormancy the covert cannot be detected (no facility exists; the
+# detection/frailty clock starts at the beginning of construction), but it also makes no
+# progress of its own — only stolen software accrues — and the silver-bullet emergence
+# curve keeps running on the pause clock, so emergence mass accumulated while dormant
+# bites the moment construction starts. Construction (2y, inherited) follows the dormancy
+# in sequence.
+#
+# Question this run answers: is there an optimal dormancy length — does waiting out the
+# early detection window beat starting to race immediately?
+#
+#   python -m plan_a_covert_proj.pipeline.run --num 1000 \
+#       --model-config plan_a_covert_proj/config/model_scenario_branch.yaml \
+#       --covert-config plan_a_covert_proj/config/covert_bottom_up_uncertain_dormancy.yaml
+
+parent: covert_bottom_up.yaml
+
+covert_parameters:
+  dormancy_years:
+    dist: uniform
+    min: 0
+    max: 6

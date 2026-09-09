@@ -1,0 +1,993 @@
+\documentclass{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
+\usepackage{amsfonts}
+\usepackage{hyperref}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{amsthm}
+\usepackage{verbatim}
+
+% Comment these out to run npm run latex
+%\usepackage{tikz}
+%\usepackage{pgfplots}
+%\pgfplotsset{compat=1.18}
+%\usetikzlibrary{backgrounds}
+%\usepackage{xcolor}
+%\definecolor{paperbg}{HTML}{FFFFF8} % this is your #FFFFF8
+
+
+\theoremstyle{definition}
+\newtheorem*{definition}{Definition}
+
+% Define a new sectioning level: subsubsubsection
+\titleclass{\subsubsubsection}{straight}[\subsubsection]
+
+\newcounter{subsubsubsection}[subsubsection]
+\renewcommand\thesubsubsubsection{\thesubsubsection.\arabic{subsubsubsection}}
+
+\newcommand{\BTODO}[1]{\textcolor{brown}{BH-TODO: #1}}
+\newcommand{\BSUG}[1]{\textcolor{orange}{BH-SUGGESTION: #1}}
+\newcommand{\ETODO}[1]{\textcolor{blue}{ELI-TODO: #1}}
+\newcommand{\ESUG}[1]{\textcolor{purple}{ELI-SUGGESTION: #1}}
+\newcommand{\ENOTE}[1]{\textcolor{purple}{ELI-NOTE: #1}}
+\newcommand{\ATODO}[1]{\textcolor{red}{ALEX-TODO: #1}}
+\newcommand{\ASUG}[1]{\textcolor{magenta}{ALEX-SUGGESTION: #1}}
+\newcommand{\ANOTE}[1]{\textcolor{magenta}{ALEX-NOTE: #1}}
+
+\newcommand{\codinganchor}{coding automation anchor}
+
+\titleformat{\subsubsubsection}
+  {\normalfont\normalsize\bfseries}{\thesubsubsubsection}{1em}{}
+
+\titlespacing*{\subsubsubsection}
+  {0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+% Make sure LaTeX numbers and shows them in the TOC
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+% Add dots after section numbers (e.g., "1." instead of "1")
+\titleformat{\section}
+  {\normalfont\Large\bfseries}{\thesection.}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}{\thesubsection.}{1em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries}{\thesubsubsection.}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\thepage}
+
+\setlength{\belowdisplayskip}{1.5\baselineskip}
+\setlength{\belowdisplayshortskip}{1.0\baselineskip}
+
+\begin{document}
+
+\section{Time horizon and the Automated Coder milestone} \label{Time horizon}
+
+Stage 1 of our model primarily predicts the trajectory of AIs' coding skills. We focus on coding automation due to coding being a strength of current AIs relative to other AI R\&D tasks (and we focus on AI R\&D tasks so that we can use them to predict how AI R\&D automation will affect AI progress).
+
+We extrapolate capabilities on the \href{https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/}{METR-HRS coding time horizon benchmark} in order to predict coding automation. We choose METR-HRS due to the relative feasibility of extrapolating it to very advanced capabilities, and the years-long time period for which we have past data.
+
+The coding time horizon, $H(t)$, is the length of the coding tasks the frontier model can successfully complete 80\% of the time, as measured by how long it takes humans to complete them. For example, if an AI has a 2 hour 80\% time horizon, that means it can complete with an 80\% success rate tasks that take human baseliners 2 hours (and for tasks that take baseliners more time, it has a lower success rate). METR has found that time horizon has been growing exponentially over the last 5 years, with a doubling time of roughly 7 months.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{METR_graph.png}
+\end{figure}
+
+We want to predict when the \textit{Automated Coder (AC)} milestone is reached. An AC is a collective of AIs that, if dropped into the present day, would be as productive at coding as all present human coders with no AI assistance (using 5\% of the compute of a present-day frontier AI project). A simple method for predicting the arrival date of an Automated Coder would be:
+
+\textbf{Simple Method for forecasting Automated Coder.} \textit{Estimate what time horizon threshold (on an extended version of METR's benchmark) would correspond to an Automated Coder, then use a straightforward exponential-in-time extrapolation of METR's past data points to predict when this time horizon will be achieved.}
+
+\textbf{Expandable: Why an 80\% success rate requirement?} 80\% is the highest success rate time horizon that METR considers high-quality. How is it possible that an 80\% time horizon could correspond to dominating the average coder across all categories of tasks? (a) There is some randomness in whether an AI succeeds at an individual task, so even an AI that dominates average humans across all categories will not have 100\% reliability at human-level or above efficiency on individual tasks. (b) We adjust the required 80\% time horizon upward to account for increased reliability requirements. 
+\textbf{End of expandable}
+
+\ASUG{I think the next expandable still needs to be clarified. Maybe also the definition of efficiently automatable.}
+
+\textbf{Expandable: Efficiency requirements for time horizons.} We explicitly impose both a \textit{speed requirement} and a \textit{compute-efficiency requirement} for an AI completing a task to count as success. Specifically, we require the AI to (a) complete the task as quickly as the median human at the AGI project who does similar tasks, and (b) use a proportion of present-day automation compute equal to the proportion of human coders working on the task at the AGI project. The METR paper does not set such speed and compute-efficiency thresholds, but we think this is important since AIs already sometimes accomplish tasks less efficiently than humans, and we expect this to become more important over time as AIs are better at translating more resources into better performance. These requirements should be roughly consistent with the METR data points to date.
+\textbf{End of expandable}
+
+\textbf{Expandable: Defining our theoretical benchmark METR-HRS-Extended.} Since METR-HRS only contains tasks that take human baseliners $\leq$ 30 hours to complete and we want to forecast up to much higher levels, we define a procedure that could in principle be used to extend the task suite even though it would not be practical to actually do so. It’s important to define which human baseliners are used during the extension: the more competent they are, the larger an impact we should expect at any given time horizon. We assume that METR finds human baseliners who take the same amount of time to complete tasks as a typical AGI company programmer who does similar tasks. We think that this might be loosely consistent with their past baselining, and this also represents a simple assumption that translates relatively well to real-world impacts. \textbf{End of expandable}
+
+However, the Simple Method misses out on some important factors that we want to take into account, namely:
+\begin{enumerate}
+\item \textbf{The ``time horizon vs calendar time" trend may be disrupted by changes in the growth of inputs to AI progress and the impact of AI automation.} For example, the growth of training compute growth may slow due to limits on investment and the speed of building new fabs. Meanwhile, the human labor growth may slow over time (``there are only so many people you can usefully hire"), but the AIs getting better at coding and research will increase the aggregate labor working on AI R\&D.
+\item \textbf{Time horizon may grow superexponentially or subexponentially in calendar time, even if input trends keep holding.} Although METR has observed roughly exponential time horizon growth, with successive time horizon doublings taking roughly the same amount of time, the trend could become superexponential or subexponential (in fact the trend looks slightly superexponential at the moment because of the recent uptick, but we don't actually consider this to be substantial evidence). Our best guess is that time horizon would grow superexponentially even absent AI R\&D automation. This is because we expect AIs to reach infinite time horizons (at finite time), which requires superexponential growth at some point, and we don't think there will be a sharp phase transition (more discussion below). On the other hand, one possible reason to expect subexponential growth, at least in the near-term, is data bottlenecks: it may be expensive to collect high-quality data for long-horizon tasks.
+\end{enumerate}
+
+The next subsections explain the additions we make to the Simple Method (which already includes a present doubling time parameter $\tau$ and an Automated Coder time horizon requirement $H_{\text{AC}}$) to address these shortcomings. Here's a brief summary:
+\begin{enumerate}
+    \item We track time horizon as a function of effective compute (which is a combination of training compute and software progress) rather than calendar time. In particular, to find the AC arrival time, the logic of our model is to first determine the effective compute $E_{\text{AC}}$ corresponding to AC (which we do by modeling time horizon vs effective compute and setting the AC time horizon $H_{\text{AC}}$), then later find the AC arrival time by separately modeling the growth of effective compute.
+    \item We add a doubling difficulty growth factor $d$ which determines whether (and the extent to which) time horizon grows superexponentially or subexponentially in $\log(\text{effective compute})$. Each time horizon doubling requires an increase in log(effective compute) that's $d$ times larger than the previous doubling. (Note that we've converted the question of time horizon growing (super/sub)exponentially with calendar time to the question of time horizon growing (super/sub)exponentially with log(effective compute).)
+    \item We add an optional effective compute ``gap" that is required to reach AC despite the required time horizon having been reached. This represents the gap between succeeding on very long METR-style benchmark coding tasks and automating coding in the real world.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{time_horizon_growth.png}
+\end{figure}
+
+\subsection{Replacing calendar time with effective compute} \label{Replacing calendar time}
+
+%\textbf{Eli's version:}
+
+%Rather than mapping directly from calendar time to AI capabilities, we'd like to track an input variable that takes into account inputs to AI progress, i.e. compute and labor, changing over time. We use \textit{effective compute}: a metric that collapses \textit{software progress}, i.e. more efficiently converting training compute into performance, onto the same axis as training compute.
+
+%See \S\ref{sec:modeling-effective-compute} for more on how effective compute is defined and calculated.
+
+%--- END OF Eli's proposal ---
+
+As mentioned above, we want to move away from directly thinking of time horizon as a function of calendar time, since calendar time trends aren't mechanistic enough for our purposes and they may change in the future (e.g. because training compute growth slows due to investment limits, AIs helping with R\&D introduces new dynamics, etc.). We chose to instead track time horizon (and other AI capabilities) as a function of \textit{effective compute}, which is directly sensitive to changing inputs to AI progress. By definition, effective compute $E(t)$ is the amount of training compute we'd need to train models as performant as the frontier models at time $t$ using the training process of the present-day. It's a convenient metric that collapses software progress (i.e. more efficiently converting training compute into performance) onto the same axis as training compute. We'll revisit the motivation and modeling of effective compute \hyperref[Effective compute]{later}, after we finish explaining our modeling of time horizons and the Automated Coder milestone.
+
+%We switch from modeling time horizon as a function of calendar time, to modeling time horizon as a function of \textit{effective compute}. By definition, effective compute $E(t)$ is the amount of training compute we'd need to train models as performant as the frontier models at time $t$ using the training process of the present-day. It's a useful measure of AI progress which captures the idea that scaling training compute would in principle result in arbitrarily high AI capabilities \ASUG{More motivation for compute-centric view?} Effective compute is the product of training compute $C_\text{train}(t)$ and \textit{software efficiency} $S(t)$:
+%\[ E(t) = C_\text{train}(t) \, S(t).\]
+%Here $S(t)$  measures how compute-efficient the training process at time $t$ is. By definition, $S(\text{present-day}) = 1$. And $S(\text{June 2027}) = 1000$ would mean: if we used the present-day training process, it would take $1000 \times$ more compute than in June 2027 to train models as performant as the best from June 2027. (We'll come back to how $S(t)$ is modeled later.)
+
+%Effective compute plays an important role in our model. As we explain later, our model attempts to describe how changes in compute, human labor, and AI automation ultimately lead to increases in software efficiency, and in turn in effective compute. So, whereas modeling time horizon as a function of calendar time doesn't account for these changes in compute, human labor, and AI automation, modeling time horizon as a function of effective compute does. And as explained later, we will map increases in effective compute to increases in AIs' capability to automate coding and research.
+
+\subsection{Time horizon progression} \label{Time horizon progression}
+
+Both the METR-HRS time horizon and effective compute increased roughly exponentially over the last 5 years. Therefore one might expect an exponential relationship between log(effective compute) and time horizon. We write $\tau$ for the number of orders of magnitude (OOMs) of effective compute needed to double time horizon. (Although we initially talked about time horizon growing exponentially \emph{as a function of time}, the discussion translates to talking about time horizon as a function of (OOMs of) effective compute.) Intuitively:
+\[ \text{effective compute increases by $\tau$ OOMs} \quad \xrightarrow{\text{assumes exponential}} \quad \text{1 doubling of time horizon }\]
+
+We primarily set $\tau$ by fitting historical METR-HRS trends, balancing between the long-term observed trend and a potential recent uptick. %In our formulas, $\tau$ actually represents the present-day increase in log(effective compute) needed to double time horizon. While website users enter a doubling time parameter (in units of time), this is then automatically converted to the analogous quantity for log(effective compute) that appear in the formulas. 
+
+Now we address the second issue about the Simple Method we brought up, namely that the Simple Method assumes time horizon will keep growing exponentially as a function of log(effective compute). We model the possibility that time horizon may grow superexponentially or subexponentially via a parameter $d > 0$, which we call the doubling difficulty growth factor. The idea is that each time horizon doubling should require $d$ times what the last time horizon doubling took (in OOMs of effective compute). So $d=1$ corresponds to the exponential case, $0 < d < 1$ to the superexponential case, and $d > 1$ to the subexponential case.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{doubling_difficulty.png}
+\end{figure}
+
+\textbf{Our best guess is that time horizon should grow superexponentially with effective compute, so that $d < 1$.} This is primarily because we expect that once AIs ultimately surpass humans at long-horizon agency, they will have infinite or extremely large time horizons (see the next expandable box). If an AI does have an infinite time horizon at a finite effective compute level, then (as the METR authors themselves point out) time horizon should grow faster than exponentially at least as one approaches that critical level of log(effective compute). While it is quite conceivable that growth would be roughly exponential up until we get close to that critical level of log(effective compute), our best guess is that there won't be such a strong phase transition, and that the superexponentiality will become noticeable earlier.
+
+Indeed, we have the intuition that increasing time horizon from, say, 1000 years to 2000 years should be easier than increasing time horizon from 1 hour to 2 hours; by the time an AI has a 1000 year time horizon, it presumably already has most of the long-horizon agency skills (long-term planning, decomposing long tasks, noticing and correcting mistakes, etc.) needed to get to the 2000 year time horizon. This intuitive argument also motivates our choice of the ``next-doubling-is-$d$-times-easier" superexponential functional form we use in our model (a priori there are many choices for superexponentials). We are open to using a different superexponential functional form in our future modeling. \ASUG{I wonder if we should link to the titotal response for more discussion.}
+
+%We do not think that every continuous AI capability metric will have superexponential-in-log(effective compute) growth. Our views on METR-HRS are due to time horizons being defined relative to human baseliners. For example, our best guess is that the Epoch Capabilities Index will grow exponentially in log(effective compute), though it may grow superexponentially in time due to AI R\&D automation.
+
+\textbf{Expandable: When AIs develop better long-horizon agency skills than humans, they may have infinite time horizons.} 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{infinite_horizons.png}
+\end{figure}
+Suppose we get AIs with better long-horizon agency skills than the METR-HRS-Extended human baseliners. If we plot the AIs' success rate on tasks vs. the time it takes the human baseliners to complete those tasks (the ``human-task-time"), what does that look like? There are three possibilities:
+\begin{enumerate}
+\item \textbf{The success rate increases with human-task-time, reversing the trend shown by current AIs. This corresponds to an infinite 80\% time horizon.} Recall that our time horizon definition requires AIs to complete the task as quickly as the human baseliners and with an amount of automation compute proportional to the horizon length. Because of this requirement, an AI may have an ``easier" time completing longer horizon tasks since it's allotted more work time and compute to run on. In some sense the AI is better at long-horizon tasks than at short-horizon tasks, relative to humans’ skill profile.
+\item \textbf{The success rate decreases with human-task-time, but it asymptotes above 80\%. This corresponds to an infinite 80\% time horizon.} The analysis is similar to item 1, but now the AIs are more often successful at short-horizon tasks than at long-horizon tasks (even if they're allotted more work time and compute for the longer tasks). That said, they still beat humans at least 80\% of the time at every task length.
+\item \textbf{The success rate drops below 80\% but only for extremely long human-task-times. This corresponds to a finite (but extremely large) 80\% time horizon.}
+\end{enumerate}
+
+We think (1) and (2) are substantially more likely than (3) for the human-relative conception of time horizons, though we still think (3) is a non-negligible possibility. \textbf{End of expandable}
+
+We write $\overline{E}$ for log(effective compute) in the formulas in the expandable boxes.
+
+\textbf{Expandable: Achievement of infinite time horizon when time horizon growth is superexponential.} If $0 < d < 1$, i.e. time horizon growth is superexponential in our model, we get an infinite time horizon when
+\[ \overline{E} = \overline{E}(\text{present-day}) + \frac{\tau}{1-d}.\]
+As discussed previously, an infinite time horizon implies that AIs are more competent at long-horizon agency than human baseliners, \textit{not} that they have reached the limits of intelligence. \textbf{End of expandable}
+
+\textbf{Expandable: Explicit formula for time horizon including superexponential and subexponential.}
+Starting from $H(\text{present-day})$, the first doubling of time horizon requires $\overline{E}$ to increase by $\tau$, the second doubling by $d \tau$, the third doubling by $d^2 \tau$, and so forth. Provided $H(t)$ is not infinite yet (which eventually happens for $d < 1$), we can calculate an explicit formula for $H(t)$:
+\[ H(t) = 
+\begin{cases} 
+H(\text{present-day}) \cdot 2^{\frac{\overline{E}(t)-\overline{E}(\text{present-day})}{\tau}} & \text{if $d = 1$}; \\
+H(\text{present-day}) \cdot \left(1 - (1-d) \frac{\overline{E}(t)-\overline{E}(\text{present-day})}{\tau}\right)^{\log_d 2} & \text{if $d \neq 1$.}
+\end{cases}
+\]
+\textbf{End of expandable}
+
+
+\subsection{Setting the effective compute corresponding to the Automated Coder} \label{Automated Coder effective compute}
+
+Now that we've defined how time horizon progresses as a function of effective compute, we need to translate this into the effective compute required to reach an Automated Coder.
+
+We first set the time horizon $H_{\text{AC}}$ required to achieve AC. We set the AC time horizon requirement by estimating the time horizon of tasks that AI company programmers do, adjusting upward because our time horizons only require $80\%$ success rate, then adjusting upward again for the difference between the METR-HRS-Extended benchmark and real-world coding tasks. \ASUG{Maybe good place to mention our choice for $H_{\text{AC}}$.}
+
+Finally, we add an optional ``effective compute gap" to our model to represent the possibility that the Automated Coder milestone may come later than when the AC time horizon requirement is achieved (e.g. maybe AIs will saturate METR-HRS-extended without fully replacing a human on real-world coding tasks, in a way that can't be corrected for by adjusting the required horizon). For simulations of our model that use a gap, we sample the ``pre-gap time horizon" from a different distribution than the distribution we use for simulations where the AC effective compute requirement does not use a gap. We do this because the ``gap perspective" seems connected to the view that an extended METR-style benchmark would saturate at lower time horizons, compared with the perspective where a high enough time horizon gives an Automated Coder.
+
+% \ASUG{Still a bit confusing what ``saturates at a low time horizon" means for the METR benchmark.}
+
+\textbf{Expandable: Explicit formula for the Automated Coder effective compute requirement, including an (optional) effective compute gap.}
+\[     \overline{E}_{\text{AC}}=
+    \begin{cases}
+        \overline{E}(\text{present-day}) + \frac{\tau}{d-1}\left(\left(\frac{H_{\text{AC}}}{H(\text{present-day})}\right)^{\log_2 d}-1\right) + \overline{E}_{\text{gap}} & \text{ if } d \neq 1; \\
+        \overline{E}(\text{present-day}) + \tau \,\log_2\!\left(\frac{H_{\text{AC}}}{H(\text{present-day})}\right) + \overline{E}_{\text{gap}} & \text{ if } d=1.
+    \end{cases}\]
+\textbf{End of expandable}
+
+\begin{comment}
+\section{Modeling effective compute, version 1}
+\label{sec:modeling-effective-compute}
+
+%\ASUG{Do we want to call ``automated labor" an input?}
+
+In our model, we take into account inputs including human labor, automated labor, training compute, experiment compute, and automation compute. We therefore need some way to aggregate all these inputs together and map them onto concrete capabilties. Given that recent AI progress has been driven in substantial part by scaling up the compute used to train models, we decide to aggregate these inputs into \textit{effective compute}: a metric that collapses \textit{software progress}, i.e. more efficiently converting training compute into performance, onto the same axis as training compute. We then translate effective compute into concrete capabilities, as described in \hyperref[Automated Coder effective compute]{Automated Coder Effective Compute}, \hyperref[Coding automation]{Coding Automation}, and \hyperref[Experiment selection automation]{Experiment Selection Automation}.
+
+Effective compute $E(t)$ is the amount of training compute we'd need to train models as performant as the frontier models at time $t$ using the training process of the present-day. We express effective compute as the product of training compute $C_\text{train}(t)$ and \textit{software efficiency} $S(t)$:
+\[ E(t) = C_\text{train}(t) \, S(t).\]
+Software efficiency $S(t)$ measures how compute-efficient the training process at time $t$ is. By definition, $S(\text{present-day}) = 1$. And $S(\text{June 2027}) = 1000$ would mean: if we used the present-day training process, it would take $1000 \times$ more compute than in June 2027 to train models as performant as the best from June 2027. (We'll come back to how $S(t)$ is modeled later.)
+
+While effective compute is the best solution we know of for aggregating inputs to AI progress, it bakes in important assumptions, in particular that something like current AI training processes with relatively minor adaptations could scale to very high capabilities. We believe our model is still valuable even if this assumption fails, as one could make definitions of effective compute that allow for more ``adaptation labor" and this might lead to similar behavior. But it is certainly harder to interpret the effective compute values without this assumption and our model's results may be off base because of this.\footnote{In future model iterations, we may switch to using something like the Epoch Capabilities Index as our core capabilities metric.} \ASUG{``Adaptation labor" needs to be clarified.}
+%\ESUG{Maybe move above paragraph to expandable.} 
+
+\subsection{Compute forecasts} \label{sec:compute-forecasts}
+
+In our model we track 3 types of compute:
+\begin{enumerate}
+    \item Training compute $C_\text{train}(t)$, a direct input to effective compute.
+    \item Experiment compute $C_\text{xpm}(t)$, an input to software efficiency.
+    \item Automation compute $C_\text{aut}(t)$, an input into \hyperref[Coding automation]{coding automation}.
+\end{enumerate}
+
+These are modeled as exogenous time series, i.e. they don't change based on what else is going on in the model. This means we aren't modeling hardware R\&D automation, hardware production automation, or economic growth, which is a serious limitation of our model, particularly in slow takeoff scenarios.
+
+We forecast these by doing \ETODO{finish this}.
+
+\subsection{Software efficiency} \label{sec:software-efficiency}
+
+%\ASUG{I don't like this subsection on software efficiency and prefer my version.}
+
+Recall that software efficiency, $S(t)$, measures how efficiently the training process at time $t$ can convert training compute into performance. The inputs to $S(t)$ in the past have been human labor and experiment compute. We need to model how the inputs of human labor and experiment compute are transformed into the output $S(t)$.
+
+When we look at past empirical data, we see that human labor and experiment compute have been growing exponentially over time. Meanwhile, $S$ has also been growing exponentially.
+\ESUG{We should have a figure showing our guess as to each of human labor, exp compute, and S have grown in the past}
+
+\[\text{AI R\&D labor and experiment compute grows exponentially}\]
+\[\downarrow\]
+\[\text{$S$ grows exponentially}\]
+
+Before modeling the relationship between the inputs to software R\&D and the output, $S$, we define a way of aggregating the inputs.
+
+\textit{Research effort, $RE$,} aggregates AI software R\&D inputs (coding labor and experiment selection skill) and experiment compute into a single metric: it can be thought of as the number of quality-adjusted experiments that a project can run. By quality-adjusted, we mean that if Projects A and B have the same amount coding labor and experiment compute (and thus the smae capacity to run experiments), but Project A has $2x$ the research effort of Project B, then Project A is better at selecting experiments to run such that Project A would be indifferent between running $2x$ fewer experiments and replacing their experiment selection abilities with that of Project B. The definition of research effort is further discussed below. (todo link)
+
+We should expect $RE$ to be growing exponentially if the inputs to $RE$ are growing exponentially, because exponential growth in coding labor and experiment compute enable an exponential increase in capacity to implement and run experiments, and we model humans' experiment selection skill as being constant (making the simplifying assumption that quality is much more important than quantity).
+
+What does this suggest for how we should model the relationship between $RE$ and $S$? Let's define \textit{research stock RS(t)} as the \textit{total} amount of research effort done by time $t$. In symbols,
+\[ RS(t) = \int_{-\infty}^t RE(\tau) \, d\tau\text{; $RS$ is to $RE$ what distance traveled is to speed.}\]
+
+If $RE$ is growing exponentially, $RS$ must also be growing exponentially. Since $S(t)$ and $RS(t)$ both grow exponentially over time, the relationship between them is best modeled by a power law:
+\[ S(t) = C \cdot RS(t)^{1/\beta}, \quad \text{for some fixed parameters $C$ and $\beta > 0$}.\]
+
+Intuitively:
+\[ \text{$\beta$ doublings of research stock $RS$} \quad \xrightarrow{\text{produces}} \quad \text{1 doubling of software efficiency $S$}\]
+
+In order to keep up with growth in training compute $C_{train}$, $S$ needs to grow exponentially; if $S$ grows subexponentially, then software efficiency improvements will fade into irrelevance relative to training compute.
+
+But in order to sustain exponential growth in $S$, $RE$ must also grow exponentially. Experiment compute $C_{xpm}$ should grow at a similar rate to training compute, so the question of whether $S$ can continue to "keep up" with $C_{train}$ depends on whether human and automated labor can continue at least exponential growth.
+
+\[ \text{exponential increases in AI R\&D labor}\]
+\[\downarrow \text{are required for}\]%\text{are required for}
+\[\text{exponential growth in $S$ to keep up with $C_{train}$}\]
+
+This can be explained by appealing to ``diminishing returns" to $RE$: as the ``low-hanging fruit" of software improvements get plucked, sustaining exponential growth of $S$ requires increasing amounts of effort. This phenomenon has sometimes been referred to as ``ideas getting harder to find`` [cite bloom].
+
+\textbf{Expandable: Mathematics and visualization of diminishing returns}
+
+AI capabilities come from a combination of software efficiency $S$ and training compute $C_{\text{train}}$. Since training compute has been growing exponentially, for $S$ to ``keep up" and not fade into irrelevance, it also needs to be growing exponentially. So it's natural to talk about returns on research effort in terms of $\overline{S} = \log S$ (i.e. orders of magnitude of $S$). Since
+\[ \overline{S} = \log C + \frac{1}{\beta} \cdot \log RS \approx \frac{1}{\beta} \cdot \log RS,\]
+successive equal-sized increases in $RS$ lead to smaller and smaller increases in $\overline{S}$ over time. This is the phenomenon of ``diminishing returns": the more progress has already been made, the harder it becomes to make impactful new discoveries since the low-hanging fruits have been picked.
+
+\begin{figure}[H]
+    \centering
+     \includegraphics[width=0.8\linewidth]{diminishing_returns.png}
+\end{figure}
+\textbf{End of expandable}
+
+\textbf{Expandable: Connection to the Jones semi-endogenous growth model}
+
+Jones 1995 uses the following growth law to model idea production:
+\[
+A'(t) = a \, A(t)^{1-\beta} \, R(t)^\lambda.
+\]
+Here $A(t)$ is the stock of ideas and $R(t)$ is the number of researchers engaged in idea production. The parameter $\lambda > 0$ controls the ``stepping on toes'' effect from adding additional researchers, and $\beta>0$ represents the strength of the ``fishing out'' effect, according to which ideas become harder to find as the stock grows.
+
+In past AGI takeoff models (e.g., \href{https://takeoffspeeds.com/description.html}{Davidson's FTM model} and \href{https://epoch.ai/gate}{Epoch's GATE model}), software efficiency $S(t)$ replaced the stock of ideas $A(t)$. All proposed models have had the form
+\[S'(t) = a \, S(t)^{1-\beta} \, RE(t),\]
+for various definitions of research effort $RE(t)$.
+
+We show this growth law reduces to our formula $S(t) = C \cdot RS(t)^{1/\beta}$ from above. We have:
+\begin{align*}
+RS(t) &= \int_{-\infty}^t RE(\tau) \, d\tau = \frac{1}{a}\int_{-\infty}^t \frac{S'(\tau)}{S(\tau)^{1-\beta}}d\tau. \\
+\intertext{The integral on the right can be computed via the substitution $U = S(\tau)^\beta$, $dU = \frac{\beta S'(\tau)}{ S(\tau)^{1-\beta}}d\tau$:}
+RS(t) &= \frac{1}{a}\int_{-\infty}^t \frac{S'(\tau)}{S(\tau)^{1-\beta}}d\tau \\
+ &= \frac{1}{a\beta} \left(S(t)^\beta - S(-\infty)^\beta\right) \\
+ &= \frac{1}{a \beta} S(t)^\beta . \\
+\intertext{Solving for $S(t)$,}
+S(t) &= \left( a \beta \right)^{1/\beta} RS(t)^{1/\beta} = C \cdot RS(t)^{1/\beta}, \quad \quad \quad \text{for $C = \left(a\beta\right)^{1/\beta}$}. 
+\end{align*}
+\textbf{End of expandable}
+
+\subsection{Research effort and AI software R\&D uplift} \label{sec:research-effort}
+
+Research effort $RE(t)$ is the number of quality-adjusted experiments the project can perform per unit time. Research effort combines:
+\begin{enumerate}
+\item the number of experiments the project can implement and run per unit time (where compute-intensive and coding-labor-intensive experiments are weighted more heavily), which we call \textit{experiment throughput} $X(t)$; and
+\item the average value of an experiment, which we call (aggregate) \textit{experiment selection skill} $T(t)$ ($T$ for ``taste").
+\end{enumerate}
+Research effort is then expressed as:
+\[ RE(t) = T(t) \, X(t)\]
+For example, if researcher A has $2 \times$ the experiment selection skill of researcher B, then an experiment proposed by A counts for twice as much in research effort as an experiment proposed by B (assuming the two experiments are compute-equivalent and coding-labor-equivalent).
+
+For how experiment selection skill is calculated, see \hyperref[Aggregate Experiment Selection Skill]{Aggregate experiment selection skill}. We discuss experiment throughput in the next subsection.
+
+%We model research effort in an experiment-centric fashion.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{Research_effort.png}
+\end{figure}
+
+Related to research effort, we track \textit{AI software R\&D uplift} for each time $t$ (called ``AI software R\&D progress multiplier” in our previous work). This concept is what it sounds like: it measures ``how much faster R\&D goes with the AIs compared with without the AIs". Write $RE(\text{AI}_t \rightarrow \text{present-day})$ for what research effort would be in the present-day if we magically transported the AIs from time $t$ back to the present-day. Then AI software R\&D uplift is:\footnote{In the definition of AI software R\&D uplift, we only transport \textit{the AIs} back to the present-day, not the extra experiment/automation compute and the extra human labor that will be available at time $t$.}
+\[\frac{RE(\text{AI}_t \rightarrow \text{present-day})}{RE(\text{present-day})}.\]
+
+\subsection{Experiment throughput} \label{sec:experiment-throughput}
+
+\textit{Experiment throughput} $X(t)$ represents the AI project's capacity for implementing and running experiments. It can roughly be understood as the number of experiments the project manages to implement and run per unit time, where experiments are weighted by how much compute they use and how labor-intensive they are to code.
+
+Experiment throughput is modeled as a function of experiment compute $C_\text{xpm}(t)$ (i.e. the H100-equivalents used to run research experiments) and coding labor $L_C(t)$ (i.e. the number of full-time-human-equivalent coders). Although experiment throughput goes up with both experiment compute $C_{\text{xpm}}(t)$ and coding labor $L_C(t)$, there are diminishing returns to only increasing one of the inputs and not the other. One way to model this relationship would be to use a Cobb-Douglas function: $X(t) = C_\text{xpm}(t)^\alpha L_C(t)^\beta$ where $0 < \alpha < 1$ and $0 < \beta < 1$. This has the property that if one of $C_\text{xpm}(t)$ or $L_C(t)$ becomes much larger than the other, then increases in $X(t)$ come mainly from the smaller input, because the larger input exhibits diminishing returns.
+
+One problem with the Cobb-Douglas function is that experiment throughput can go to infinity when one of $C_{\text{xpm}}(t)$ or $L_C(t)$ goes to infinity but the other remains bounded, which isn't realistic. If you have infinite coding labor but only a fixed amount of experiment compute, you can only implement so many experiments per unit time; and if you have experiment compute but only a fixed number of coders, you don't have enough workers to code up experiments that (usefully) use the compute.\footnote{Technically, with infinite compute you could code something up to search the space of all possible AI designs, but that takes time and thus does not provide an infinite speedup.} In economic terms, we would say that experiment compute and coding labor are complementary inputs that cannot fully substitute for each other. This is often modeled with a CES (``constant elasticity of substitution") production function with substitution parameter $\rho_X < 0$ (the rest of the model explanation won't depend on the mathematical details we discuss here): 
+\[ X(t) = \left( \alpha \, \tilde{C}_{\text{xpm}}(t)^{\rho_X} + (1-\alpha) \, \tilde{L}_C(t)^{\rho_X} \right)^{1/\rho_X}, \quad 0 < \alpha < 1,\; \rho_X < 0,\]
+where
+\[\tilde C_{\text{xpm}}(t) = C_{\text{xpm}}(t)^\zeta, \quad \tilde L_{\text{C}}(t) = L_{\text{C}}(t)^\lambda, \quad 0 < \zeta < 1,\; 0 < \lambda < 1.\]
+
+\textit{What is $\alpha$?} The closer $0< \alpha < 1$ is to $1$, the more experiment compute is considered important relative to coding labor. 
+
+\textit{What is $\rho_X$?} The smaller $\rho_X < 0$ is, the less it's possible to only increase one of $C_{\text{xpm}}(t)$ and $L_C(t)$ in order to increase $X(t)$. The CES expression has the property that: if we fix $C_\text{xpm}(t)$ and take $L_C(t)$ to infinity, then $X(t)$ will asymptote to $\alpha^{1/\rho} \tilde{C}_\text{xpm}(t)$; and if we fix $L_C(t)$ and take $C_\text{xpm}(t)$ to infinity, then $X(t)$ will asymptote to $(1-\alpha)^{1/\rho} \tilde{L}_C(t)$. In simple terms, when $\rho_X < 0$ is small, the maximum possible boost you can get from increasing one of experiment compute or coding labor to infinity is lower. %\ASUG{Example?}
+
+\textit{What is $\lambda$?} We use the smaller quantity $L_C(t)^\lambda$ instead of $L_C(t)$ since $L_C(t)$ is a measure of \textit{parallel} coding labor but we want a measure of \textit{serial} coding labor (a single programmer can make more progress in two days than a team of two programmers can make in a day because of the ``stepping on toes" effect). The reason we use serial (rather than parallel) coding labor in the CES function is that if the project had unlimited experiment compute, the way we double experiment throughput is by letting the coding workforce work for twice as long (or speeding up the coding workforce by $2 \times$), rather than doubling the size of the coding workforce.
+
+\textit{What is $\zeta$?} The reason we discount experiment compute by the exponent \(0<\zeta<1\) is that, if one had unlimited coding labor, doubling experiment compute doesn't double experiment throughput because model size increases, meaning the ability to run near-frontier experiments goes down.
+
+%\ASUG{I wonder if discussion about how to set parameters should be put elsewhere.}
+%\ESUG{Yeah I'm not sure. We will definitely want our parameter estimation rationales somewhere on the site but not sure where they belong, and if they are somewhere else to what extent they should be summarized here. I think I do like things being summarized here a bit.}
+
+We set the parameter values as follows: \begin{enumerate}
+    \item $\lambda$: We estimated this based on our intuitions about the effect of increased parallel labor on research effort, as well as interviews with frontier AI researchers.
+    \item $\zeta, \alpha, \rho_X$: We estimated three quantities, from a fixed starting point of 2024, that together pin down the values of $\zeta$, $\alpha$, and $\rho_X$: (a) the decrease in $X(t)$ from a $10 \times$ decrease in $C_{\text{xpm}}$, (b) the $X(t)$ asymptote as we take $C_{\text{xpm}}$ to infinity, and (c) the $X(t)$ asymptote as we take $L_C(t)$ to infinity. To estimate these quantities, we combined frontier AI researcher interviews, surveys of other AI experts, and our own reasoning about how $X(t)$ would change given infinite coding labor or compute.
+\end{enumerate}
+\end{comment}
+
+% Version 2
+\section{Modeling effective compute} \label{Effective compute}
+
+%\ASUG{Do we want to call ``automated labor" an input?}
+
+% "collapses software progress" or "collapses software efficiency"?
+In our model, we take into account inputs including human labor, automated labor, training compute, experiment compute, and automation compute. We need some way to aggregate all these inputs together and map them onto concrete capabilties. Given that recent AI progress has been driven in substantial part by scaling up the compute used to train models, we decide to aggregate these inputs into \textit{effective compute}: a metric that collapses \textit{software progress}, i.e. more efficiently converting training compute into performance, onto the same axis as training compute. We then model concrete capabilities as functions of effective compute, as described in \hyperref[Automated Coder effective compute]{Automated Coder Effective Compute}, \hyperref[Coding automation]{Coding Automation}, and \hyperref[Experiment selection automation]{Experiment Selection Automation}.
+
+Effective compute $E(t)$ is the amount of training compute we'd need to train models as performant as the frontier models at time $t$ using the training process of the present-day. We express effective compute as the product of training compute $C_\text{train}(t)$ and \textit{software efficiency} $S(t)$:
+\[ E(t) = C_\text{train}(t) \, S(t).\]
+Software efficiency $S(t)$ measures how compute-efficient the training process at time $t$ is. By definition, $S(\text{present-day}) = 1$. And $S(\text{June 2027}) = 1000$ would mean: if we used the present-day training process, it would take $1000 \times$ more compute than in June 2027 to train models as performant as the best from June 2027.
+
+\textbf{Expandable: Limitations of using effective compute.}
+While effective compute is the best solution we know of for aggregating inputs to AI progress, it bakes in important assumptions, in particular that something like current AI training processes with relatively minor adaptations could scale to very high capabilities. We believe our model is still valuable even if this assumption fails, as one could make definitions of effective compute that allow for more ``adaptation labor" and this might lead to similar behavior. But it is certainly harder to interpret the effective compute values without this assumption and our model's results may be off base because of this. (In future model iterations, we may switch to using something like the Epoch Capabilities Index as our core capabilities metric.) \ASUG{``Adaptation labor" needs to be clarified.}
+\textbf{End of expandable}
+
+Our model of the progression of software efficiency $S(t)$ depends on the variables of \textit{experiment throughput} and \textit{(software) research effort}. For clarity of exposition, we discuss these first and how they're modeled. In \hyperref[a later section]{Software efficiency}, we'll explain how gains in research effort are converted into gains in software efficiency. Before all that, we say a bit more about the compute data our model uses.
+
+\subsection{Compute forecasts} \label{Compute}
+
+In our model we track 3 types of compute:
+\begin{enumerate}
+    \item Training compute $C_\text{train}(t)$, a direct input to effective compute.
+    \item Experiment compute $C_\text{xpm}(t)$, an input to software efficiency.
+    \item Automation compute $C_\text{aut}(t)$, an input into \hyperref[Coding automation]{coding automation}.
+\end{enumerate}
+
+These compute trends are modeled as exogenous time series, i.e. they're not affected by what else is going on in the model. This means we aren't modeling hardware R\&D automation, hardware production automation, or economic growth, which is a serious limitation of our model, particularly in slow takeoff scenarios.
+
+We forecast these by doing \ETODO{finish this}.
+
+\subsection{Experiment throughput} \label{Experiment throughput}
+
+\textit{Experiment throughput} $X(t)$ represents the AI project's capacity for implementing and running experiments. It can roughly be understood as the number of experiments the project manages to implement and run per unit time, where experiments are weighted by how much compute they use and how labor-intensive they are to code.
+
+Experiment throughput is modeled as a function of experiment compute $C_\text{xpm}(t)$ (i.e. the H100-equivalents used to run research experiments) and coding labor $L_C(t)$ (i.e. the number of full-time-human-equivalent coders). Although experiment throughput goes up with both experiment compute $C_{\text{xpm}}(t)$ and coding labor $L_C(t)$, there are diminishing returns to only increasing one of the inputs and not the other. One way to model this relationship would be to use a Cobb-Douglas function: $X(t) = C_\text{xpm}(t)^\alpha L_C(t)^\beta$ where $0 < \alpha < 1$ and $0 < \beta < 1$. This has the property that if one of $C_\text{xpm}(t)$ or $L_C(t)$ becomes much larger than the other, then increases in $X(t)$ come mainly from the smaller input, because the larger input exhibits diminishing returns.
+
+One problem with the Cobb-Douglas function is that experiment throughput can go to infinity when one of $C_{\text{xpm}}(t)$ or $L_C(t)$ goes to infinity but the other remains bounded, which isn't realistic. If you have infinite coding labor but only a fixed amount of experiment compute, you can only implement so many experiments per unit time; and if you have infinite experiment compute but only a fixed number of coders, you don't have enough coders to implement experiments that \textit{usefully} use all the compute. (Technically, with infinite experiment compute you could search the space of all possible AI designs, but that takes time and thus does not provide an infinite speedup; further, we aren't in that regime anyway.) In economic terms, we would say that experiment compute and coding labor are complementary inputs that cannot fully substitute for each other. This is often modeled with a CES (``constant elasticity of substitution") production function with substitution parameter $\rho_X < 0$, and we use this approach. See the following expandable box for mathematical details.
+
+\textbf{Expandable: More details.} Experiment throughput is given by the following CES production function:
+\[ X(t) = \left( \alpha \, \tilde{C}_{\text{xpm}}(t)^{\rho_X} + (1-\alpha) \, \tilde{L}_C(t)^{\rho_X} \right)^{1/\rho_X}, \quad 0 < \alpha < 1,\; \rho_X < 0,\]
+where
+\[\tilde C_{\text{xpm}}(t) = C_{\text{xpm}}(t)^\zeta, \quad \tilde L_{\text{C}}(t) = L_{\text{C}}(t)^\lambda, \quad 0 < \zeta < 1,\; 0 < \lambda < 1.\]
+
+\textit{What is $\alpha$?} The closer $0< \alpha < 1$ is to $1$, the more experiment compute is considered important relative to coding labor. 
+
+\textit{What is $\rho_X$?} The smaller $\rho_X < 0$ is, the less it's possible to only increase one of $C_{\text{xpm}}(t)$ and $L_C(t)$ in order to increase $X(t)$. The CES expression has the property that: if we fix $C_\text{xpm}(t)$ and take $L_C(t)$ to infinity, then $X(t)$ will asymptote to $\alpha^{1/\rho} \tilde{C}_\text{xpm}(t)$; and if we fix $L_C(t)$ and take $C_\text{xpm}(t)$ to infinity, then $X(t)$ will asymptote to $(1-\alpha)^{1/\rho} \tilde{L}_C(t)$. In simple terms, when $\rho_X < 0$ is small, the maximum possible boost you can get from increasing one of experiment compute or coding labor to infinity is lower.
+
+\textit{What is $\lambda$?} We use the smaller quantity $L_C(t)^\lambda$ instead of $L_C(t)$ since $L_C(t)$ is a measure of \textit{parallel} coding labor but we want a measure of \textit{serial} coding labor (a single programmer can make more progress in two days than a team of two programmers can make in a day because of the ``stepping on toes" effect). The reason we use serial (rather than parallel) coding labor in the CES function is that if the project had unlimited experiment compute, the way we double experiment throughput is by letting the coding workforce work for twice as long (or speeding up the coding workforce by $2 \times$), rather than doubling the size of the coding workforce.
+
+\textit{What is $\zeta$?} The reason we discount experiment compute by the exponent \(0<\zeta<1\) is that, if one had unlimited coding labor, doubling experiment compute doesn't double experiment throughput because model size increases, meaning the ability to run near-frontier experiments goes down.
+
+%\ASUG{I wonder if discussion about how to set parameters should be put elsewhere.}
+%\ESUG{Yeah I'm not sure. We will definitely want our parameter estimation rationales somewhere on the site but not sure where they belong, and if they are somewhere else to what extent they should be summarized here. I think I do like things being summarized here a bit.}
+
+We set the parameter values as follows: \begin{enumerate}
+    \item $\lambda$: We estimated this based on our intuitions about the effect of increased parallel labor on research effort, as well as interviews with frontier AI researchers.
+    \item $\zeta, \alpha, \rho_X$: We estimated three quantities, from a fixed starting point of 2024, that together pin down the values of $\zeta$, $\alpha$, and $\rho_X$: (a) the decrease in $X(t)$ from a $10 \times$ decrease in $C_{\text{xpm}}$, (b) the $X(t)$ asymptote as we take $C_{\text{xpm}}$ to infinity, and (c) the $X(t)$ asymptote as we take $L_C(t)$ to infinity. To estimate these quantities, we combined frontier AI researcher interviews, surveys of other AI experts, and our own reasoning about how $X(t)$ would change given infinite coding labor or compute.
+\end{enumerate}
+\textbf{End of expandable}
+
+\subsection{Research effort and AI R\&D uplift} \label{Research effort}
+
+Research effort $RE(t)$ is the number of \textit{quality-adjusted} experiments the project can perform per unit time. That is, it's a version of experiment throughput $X(t)$ but where experiments proposed by more skillful researchers are weighted more (experiment throughput only weighted experiments by the amount of experiment compute they required and how much coding labor they required to be implemented).
+
+We model research effort $RE(t)$ as the product of experiment throughput $X(t)$ and \textit{aggregate experiment selection skill} $T(t)$ (``$T$" for ``taste"):
+\[ RE(t) = T(t) \, X(t.)\]
+Intuitively, $T(t)$ measures the average value per experiment. For example, if researcher A has $2 \times$ the experiment selection skill of researcher B, this means an experiment proposed by A is as valuable as two experiments proposed by B (assuming all three of these experiments are compute-equivalent and coding-labor-equivalent). For how experiment selection skill is calculated, see \hyperref[Aggregate experiment selection skill]{Aggregate experiment selection skill}. 
+
+%We model research effort in an experiment-centric fashion.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{Research_effort.png}
+\end{figure}
+
+Related to research effort, we track \textbf{AI software R\&D uplift} for each time $t$ (called ``AI software R\&D progress multiplier” in our previous work). This concept is what it sounds like: it measures ``how much faster R\&D goes with the AIs compared with without the AIs". Write $RE(\text{AI}_t \rightarrow \text{present-day})$ for what research effort would be in the present-day if we magically transported the AIs from time $t$ back to the present-day. Then
+\[ \text{AI software R\&D uplift} = \frac{RE(\text{AI}_t \rightarrow \text{present-day})}{RE(\text{present-day})}.\]
+Note that in the definition of AI software R\&D uplift, we only transport \textit{the AIs} back to the present-day, not the extra experiment/automation compute and the extra human labor that will be available at time $t$.
+
+\subsection{Software efficiency} \label{Software efficiency}
+
+Recall that software efficiency $S(t)$ measures how efficiently the training process at time $t$ can convert training compute into performance. We have $S(\text{present-day}) = 1$, and $S(\text{June 2027}) = 1000$ would mean: if we used the training process of the present-day, it would take $1000 \times$ more compute than in June 2027 to train models as performant as the best from June 2027.
+
+We want to understand how $S(t)$ changes as research effort $RE(t)$ changes. Technically though, $S$ is not a function of $RE$ (which is a measure of how ``fast" the AI project is going), but of how much total work has actually been done so far. So define research stock by:
+\[ RS(t) = \text{\textit{total} amount of research effort done by time $t$}.\]
+So research stock is to research effort what distance traveled is to speed. (In symbols, $RS(t) = \int_{-\infty}^t RE(\tau) \, d\tau$.)
+
+Both research stock and software efficiency describe ``how far" the AI project has come, but research stock (like research effort) is about effort/investment while software efficiency is about fruits/returns. We want to know their relationship:
+\[ \text{$RS \approx$ total AI software R\&D work done} \quad \xrightarrow{\text{relationship?}} \quad \text{$S \approx$ total returns}\]
+
+When we look at past empirical data, we see that $S(t)$ has been growing exponentially over time. Meanwhile research effort and research stock should also be growing exponentially, since both experiment compute and AI software R\&D labor have been growing exponentially over the last 10 years. So, since $S(t)$ and $RS(t)$ both grow exponentially over time (with different bases for the exponentials), the relationship between them is best modeled by a power law: 
+\[ S(t) = C \cdot RS(t)^{1/\beta}, \quad \text{for some fixed parameters $C$ and $\beta > 0$}.\]
+Intuitively:
+\[ \text{$\beta$ doublings of research stock $RS$} \quad \xrightarrow{\text{produces}} \quad \text{1 doubling of software efficiency $S$}\]
+
+\textbf{Expandable: Our model captures diminishing returns.} AI capabilities come from a combination of software efficiency $S$ and training compute $C_{\text{train}}$. Since training compute has been growing exponentially, for $S$ to ``keep up" and not fade into irrelevance, it also needs to be growing exponentially. So it's natural to talk about returns on research effort in terms of $\overline{S} = \log S$ (i.e. orders of magnitude of $S$). Since
+\[ \overline{S} = \log C + \frac{1}{\beta} \cdot \log RS \approx \frac{1}{\beta} \cdot \log RS,\]
+successive equal-sized increases in $RS$ lead to smaller and smaller increases in $\overline{S}$ over time. This is the phenomenon of ``diminishing returns": the more progress has already been made, the harder it becomes to make impactful new discoveries since the low-hanging fruits have been picked.
+
+\begin{figure}[H]
+    \centering
+     \includegraphics[width=0.8\linewidth]{diminishing_returns.png}
+\end{figure}
+\textbf{End of expandable}
+
+\label{Jones model}
+\textbf{Expandable: Connection to the Jones semi-endogenous growth model.} Jones 1995 uses the following growth law to model idea production:
+\[
+A'(t) = a \, A(t)^{1-\beta} \, R(t)^\lambda.
+\]
+Here $A(t)$ is the stock of ideas and $R(t)$ is the number of researchers engaged in idea production. The parameter $\lambda > 0$ controls the ``stepping on toes'' effect from adding additional researchers, and $\beta>0$ represents the strength of the ``fishing out'' effect, according to which ideas become harder to find as the stock grows.
+
+In past AGI takeoff models (e.g., \href{https://takeoffspeeds.com/description.html}{Davidson's FTM model} and \href{https://epoch.ai/gate}{Epoch's GATE model}), software efficiency $S(t)$ replaced the stock of ideas $A(t)$. All proposed models have had the form
+\[S'(t) = a \, S(t)^{1-\beta} \, RE(t),\]
+for various definitions of research effort $RE(t)$.
+
+We show this growth law reduces to our formula $S(t) = C \cdot RS(t)^{1/\beta}$ from above. We have:
+\begin{align*}
+RS(t) &= \int_{-\infty}^t RE(\tau) \, d\tau = \frac{1}{a}\int_{-\infty}^t S(t)^{\beta - 1} S'(\tau) \, d\tau. \\
+\intertext{The integral on the right can be computed via the substitution $U = S(\tau)^\beta$, $dU = \beta S(t)^{\beta - 1} S'(\tau)\, d\tau$:}
+RS(t) &= \frac{1}{a}\int_{-\infty}^t S(t)^{\beta - 1} S'(\tau) \, d\tau \\
+ &= \frac{1}{a\beta} \left(S(t)^\beta - S(-\infty)^\beta\right) \\
+ &= \frac{1}{a \beta} S(t)^\beta . \\
+\intertext{Solving for $S(t)$,}
+S(t) &= \left( a \beta \right)^{1/\beta} RS(t)^{1/\beta} = C \cdot RS(t)^{1/\beta}, \quad \quad \quad \text{where $C = \left(a\beta\right)^{1/\beta}$}. 
+\end{align*}
+\textbf{End of expandable}
+
+\begin{comment}
+
+\section{Modeling changes in software efficiency and effective compute (old), AK version}
+
+Next we explain our model of software R\&D and how this determines the progression of software efficiency $S(t)$. Together with an exogenous time series for training compute $C_{\text{train}}(t)$, this determines the progression of effective compute $E(t) = C_{\text{train}}(t) \, S(t)$.
+
+As a first pass, we explain how our model describes software R\&D progress \textit{without the contribution of the AIs}. Later we explain how to account for AI automation, but it will be simpler to first explain things without the AIs. \textbf{Warning: The rest of this section is a simplification of what happens in the full model, and ignores the contribution of R\&D automation.}
+
+\subsection{Experiment throughput} \label{Experiment throughput}
+
+We introduce a variable called \textit{experiment throughput} $X(t)$ to represent the AI project's capacity for implementing and running experiments. It can roughly be understood as the number of experiments the project manages to implement and run per unit time, where experiments are weighted by how much compute they use and how labor-intensive they are to code.
+
+Experiment throughput is modeled as a function of experiment compute $C_\text{xpm}(t)$ (i.e. the compute used to run research experiments) and coding labor $L_C(t)$ (i.e. the number of full-time-equivalent human coders). Although experiment throughput goes up with both experiment compute $C_{\text{xpm}}(t)$ and coding labor $L_C(t)$, there are diminishing returns to only increasing one of the inputs and not the other. One way to model this relationship would be to use a so-called Cobb-Douglas function: $X(t) = C_\text{xpm}(t)^\alpha L_C(t)^\beta$ where $0 < \alpha < 1$ and $0 < \beta < 1$. This would have the property that if one of $C_\text{xpm}(t)$ or $L_C(t)$ becomes much larger than the other, then the growth of experiment throughput starts to bottleneck on the other factor.
+
+We chose to use a slightly more complicated function to relate $X(t)$ and $C_\text{xpm}(t)$ and $L_C(t)$. One problem with the Cobb-Douglas function is that experiment throughput can go to infinity when one $C_{\text{xpm}}(t)$ or $L_C(t)$ goes to infinity but the other remains bounded, which isn't realistic. Indeed, if you have infinite coding labor but only a fixed amount of experiment compute, you can only implement so many experiments per unit time; and if you have experiment compute but only a fixed number of coders, you don't have enough workers to code up experiments that (usefully) use the compute.\footnote{Technically, with infinite compute you could code something up to search the space of all possible AI designs, but that takes time and thus does not provide an infinite speedup.} This situation comes up in economics, where we would say that experiment compute and coding labor are complementary inputs that are hard to substitute for each other. It's often modeled with a so-called CES (``constant elasticity of substitution") production function with substitution parameter $\rho_X < 0$: 
+\[ X(t) = \left( \alpha \, \tilde{C}_{\text{xpm}}(t)^{\rho_X} + (1-\alpha) \, \tilde{L}_C(t)^{\rho_X} \right)^{1/\rho_X}, \quad 0 < \alpha < 1,\; \rho_X < 0,\]
+where
+\[\tilde C_{\text{xpm}}(t) = C_{\text{xpm}}(t)^\zeta, \quad \tilde L_{\text{C}}(t) = L_{\text{C}}(t)^\lambda, \quad 0 < \zeta < 1,\; 0 < \lambda < 1.\]
+
+\textit{What is $\rho_X$?} The smaller $\rho_X$ is, the less it's possible to only increase one of $C_{\text{xpm}}(t)$ and $L_C(t)$ in order to increase $X(t)$.
+
+\textit{What is $\alpha$?} The closer $0< \alpha < 1$ is to $1$, the more experiment compute is considered important relative to coding labor.
+
+\textit{What is $\lambda$?} We use the smaller quantity $L_C(t)^\lambda$ instead of $L_C(t)$ since $L_C(t)$ is a measure of \textit{parallel} coding labor but we want a measure of \textit{serial} coding labor (a single programmer can make more progress in two days than a team of two programmers can make in a day because of the ``stepping on toes" effect). The reason we use serial (rather than parallel) coding labor in the CES function is that if the project had unlimited experiment compute, the way we double experiment throughput is by letting the coding workforce work for twice as long (or speeding up the coding workforce by $2 \times$), rather than doubling the size of the coding workforce.
+
+\textit{What is $\zeta$?} The reason we discount experiment compute by the exponent \(0<\zeta<1\) is that, if one had unlimited coding labor, doubling experiment compute doesn't double experiment throughput because model size increases, meaning the ability to run near-frontier experiments goes down.
+
+\ASUG{I wonder if discussion about how to set parameters should be put elsewhere.}
+
+We set the parameter values as follows: \begin{enumerate}
+    \item $\lambda$: We estimated this based on our intuitions about the effect of increased parallel labor on research effort, as well as interviews with frontier AI researchers.
+    \item $\zeta, \alpha, \rho_X$: We estimated three quantities, from a fixed starting point of 2024, that together pin down the values of $\zeta$, $\alpha$, and $\rho_X$: (a) the decrease in $X(t)$ from a $10 \times$ decrease in $C_{\text{xpm}}$, (b) the $X(t)$ asymptote as we take $C_{\text{xpm}}$ to infinity, and (c) the $X(t)$ asymptote as we take $L_C(t)$ to infinity. To estimate these quantities, we combined frontier AI researcher interviews, surveys of other AI experts, and our own reasoning about how $X(t)$ would change given infinite coding labor or compute.
+\end{enumerate}
+
+\subsection{Software efficiency} \label{Software efficiency}
+
+We next discuss how experiment throughput $X(t)$ translates into growth in software efficiency $S(t)$. As shown in our diagram representing the model, we have an intermediate variable between experiment throughput and software efficiency called ``software research effort", or ``research effort" for short. As we will elaborate on later, research effort $RE(t)$ is supposed to be a measure of \textit{quality-adjusted} experiment throughput:
+\[ RE(t) = T(t) \, X(t),\]
+where $T(t)$ is the \textit{aggregate experiment selection skill} of the project. If we ignore the contribution of AI automation, the aggregate experiment selection skill is just the average human experiment selection skill, which is normalized to 1. So in this case, research effort is the same as experiment throughput:
+\[ RE(t) = T(t) \, X(t) = X(t) \qquad \textit{(assuming no modeling of R\&D automation)}.\]
+For consistency with the explanations to come, we explain how changes in research effort $RE(t)$ (rather than experiment throughput $X(t)$) lead to changes in software efficiency $S(t)$, even though $RE(t)$ is the same as $X(t)$ when we don't consider AI contribution.
+
+\textbf{Converting research effort gains into software efficiency gains}
+
+Recall that software efficiency, $S(t)$, measures how efficiently the training process at time $t$ can convert training compute into performance. We have $S(\text{present-day}) = 1$, and $S(\text{June 2027}) = 1000$ would mean: if we used the training process of the present-day, it would take $1000 \times$ more compute than in June 2027 to train models as performant as the best from June 2027.
+
+We want to understand how $S(t)$ changes as research effort $RE(t)$ changes. Technically though, $S$ is not a function of $RE$ (which is a measure of how ``fast" the AI project is going), but of how much work has actually been done. So define the research stock, $RS(t)$, to be the \textit{total} amount of research effort done by time $t$; in symbols,
+\[ RS(t) = \int_{-\infty}^t RE(\tau) \, d\tau.\]
+So research stock is to research effort what distance traveled is to speed.
+
+Both research stock and software efficiency describe ``how far" the AI project has come, but research stock (like research effort) is about effort/investment while software efficiency is about fruits/returns. We want to know their relationship:
+\[ \text{$RS \approx$ total AI software R\&D work done} \quad \xrightarrow{\text{relationship?}} \quad \text{$S \approx$ total returns}\]
+
+When we look at past empirical data, we see that $S(t)$ has been growing exponentially over time. Meanwhile research stock should also be growing exponentially, since both experiment compute and AI software R\&D labor have been growing exponentially over the last 10 years. So, since $S(t)$ and $RS(t)$ both grow exponentially over time (with different bases for the exponentials), the relationship between them is best modeled by a power law: 
+\[ S(t) = C \cdot RS(t)^{1/\beta}, \quad \text{for some fixed parameters $C$ and $\beta > 0$}.\]
+Intuitively:
+\[ \text{$\beta$ doublings of research stock $RS$} \quad \xrightarrow{\text{produces}} \quad \text{1 doubling of software efficiency $S$}\]
+
+\textit{Diminishing returns}: AI capabilities come from a combination of software efficiency $S$ and training compute $C_{\text{train}}$. Since training compute has been growing exponentially, for $S$ to ``keep up" and not fade into irrelevance, it also needs to be growing exponentially. So it's natural to talk about returns on research effort in terms of $\overline{S} = \log S$ (i.e. orders of magnitude of $S$). Since
+\[ \overline{S} = \log C + \frac{1}{\beta} \cdot \log RS \approx \frac{1}{\beta} \cdot \log RS,\]
+successive equal-sized increases in $RS$ lead to smaller and smaller increases in $\overline{S}$ over time. This is the phenomenon of ``diminishing returns": the more progress has already been made, the harder it becomes to make impactful new discoveries since the low-hanging fruits have been picked.
+
+\begin{figure}[H]
+    \centering
+     \includegraphics[width=\linewidth]{diminishing_returns.png}
+\end{figure}
+
+\textbf{Expandable: Connection to the Jones semi-endogenous growth model}
+
+Jones 1995 uses the following growth law to model idea production:
+\[
+A'(t) = a \, A(t)^{1-\beta} \, R(t)^\lambda.
+\]
+Here $A(t)$ is the stock of ideas and $R(t)$ is the number of researchers engaged in idea production. The parameter $\lambda > 0$ controls the ``stepping on toes'' effect from adding additional researchers, and $\beta>0$ represents the strength of the ``fishing out'' effect, according to which ideas become harder to find as the stock grows.
+
+In past AGI takeoff models (e.g., \href{https://takeoffspeeds.com/description.html}{Davidson's FTM model} and \href{https://epoch.ai/gate}{Epoch's GATE model}), software efficiency $S(t)$ replaced the stock of ideas $A(t)$. All proposed models have had the form
+\[S'(t) = a \, S(t)^{1-\beta} \, RE(t),\]
+for various definitions of research effort $RE(t)$.
+
+We show this growth law reduces to our formula $S(t) = C \cdot RS(t)^{1/\beta}$ from above. We have:
+\begin{align*}
+RS(t) &= \int_{-\infty}^t RE(\tau) \, d\tau = \frac{1}{a}\int_{-\infty}^t \frac{S'(\tau)}{S(\tau)^{1-\beta}}d\tau. \\
+\intertext{The integral on the right can be computed via the substitution $U = S(\tau)^\beta$, $dU = \frac{\beta S'(\tau)}{ S(\tau)^{1-\beta}}d\tau$:}
+RS(t) &= \frac{1}{a}\int_{-\infty}^t \frac{S'(\tau)}{S(\tau)^{1-\beta}}d\tau \\
+ &= \frac{1}{a\beta} \left(S(t)^\beta - S(-\infty)^\beta\right) \\
+ &= \frac{1}{a \beta} S(t)^\beta . \\
+\intertext{Solving for $S(t)$,}
+S(t) &= \left( a \beta \right)^{1/\beta} RS(t)^{1/\beta} = C \cdot RS(t)^{1/\beta}, \quad \quad \quad \text{for $C = \left(a\beta\right)^{1/\beta}$}. 
+\end{align*}
+\textbf{End of expandable}
+
+\subsection{Effective compute}
+
+While software efficiency $S(t)$ is a measure of how good the training process is, ultimately AI capabilities depend on training compute $C_{\text{train}}(t)$ in addition to $S(t)$. Recall that effective compute $E(t)$ is the amount of training compute we'd need to train models as performant as the frontier models at time $t$ using the training process of the present-day, and is given by:
+\[ E(t) = C_\text{train}(t) \, S(t).\]
+It's a useful measure of AI progress which captures the idea that scaling training compute would in principle result in arbitrarily high AI capabilities \ASUG{More motivation for compute-centric view?}
+
+Effective compute is the key metric tracked by our model. As described earlier, we model time horizon as a function of effective compute (not calendar time) in order to account for changes in compute, human labor, and AI automation that wouldn't be explicit if time horizon was modeled as a function of time. And, as described in the next two sections, our model expresses AIs' capabilities to automate coding and research as functions of effective compute.
+
+\end{comment}
+
+\section{Coding automation} \label{Coding automation}
+
+We now turn to describing how our model sets AIs' R\&D capabilities and how that affects the inputs to software research effort.
+
+\subsection{Coding automation fraction} \label{Coding automation fraction}
+
+We think coding is reasonably well described as a stable set of types of tasks, and that some tasks will be (or already are) automatable far before others. %Thus, we model coding automation using a task-based approach.
+We define the \textit{coding automation fraction} $A(t)$ to be the fraction of coding work (involved in frontier AI research) that can be efficiently automated. For example, $A(\text{March 2029}) = 80\%$ means that we could use the AIs of March 2029 to automate away $80\%$ of the coding work done in the present-day and not lose in productivity ($80\%$ as measured by the proportion of clone-parity coders doing that work; see the expandable box below).
+
+%\ASUG{A bit awkward to put such emphasis on the task-based approach in the first two sentences, then define $A(t)$ as the fraction of coding ``work" that's automatable, rather than the fraction of ``tasks" that's automatable.}
+
+\label{When is a task considered efficiently automatable?}
+\textbf{Expandable: When is a task considered efficiently automatable?} We define a ``clone-parity coder" by the condition that, if every human coder were replaced by a clone-parity coder, productivity would remain the same. For each type of coding task, we weight its importance by how many clone-parity coders would work on the task absent AI assistance. We consider a task efficiently automatable when AIs can complete the task faster than the human coders and using no more than $\frac{B}{N}$ of present-day automation compute, where $B$ is the number of human clone-parity-coder-equivalents working on the task in the present-day and $N$ is the total number of human coders in the present-day. \textbf{End of expandable}
+
+Our definition of the Automated Coder milestone does not technically imply that $A(t_{\text{AC}}) = 1$ at the time $t_{\text{AC}}$ when the milestone is reached. Nevertheless, we will make the simplifying assumption that this is the case.
+
+\textbf{Expandable: Why doesn't the definition of AC literally imply all tasks are efficiently automatable?} The Automated Coder (AC) milestone was defined by the condition that if the AC was dropped into the present day, it would overall be as productive as all present-day human coders with no AI assistance. This can be true even if it's still less efficient than humans for \textit{some} proportion of tasks. \textbf{End of expandable}
+
+We model coding automation fraction $A(t)$ as an S-shaped logistic function of OOMs (orders of magnitude) of effective compute $\overline{E}(t) = \log E(t)$. That is, we estimate the automation fraction $A(\text{present-day})$ in the present, and let $A(t)$ vary logistically as a function of $\overline{E}(t)$ until $A(t)$ reaches 1 when $\overline{E}(t)$ equals the effective compute $\overline{E}_{\text{AC}}$ for the Automated Coder anchor. (In order to make the logistic function actually attain 1, we choose the right asymptote of the logistic to be greater than 1, but then truncate when we reach a coding automation fraction of 1.)
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{coding_automation_logistic.png}
+    \caption{Coding automation fraction as a logistic function of log(effective compute)}
+\end{figure}
+
+\begin{comment}
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[background rectangle/.style={fill=paperbg}, show background rectangle]
+  \begin{axis}[
+    width=10cm,
+    height=10cm,
+    axis lines=middle,
+    xlabel={$\overline{E} = \log(E)$},
+    ylabel={$A$},
+    ymin=0, ymax=1.1,
+    xmin=-2, xmax=10,
+    xtick=\empty,
+    ytick={0,0.5,1},
+    yticklabels={$0$, $0.5$, $1$},
+    domain=-2:10,
+    samples=200,
+  ]
+
+  % ----- PARAMETERS -----
+  % upper asymptote
+  \def\U{1.05}
+
+  % present-day point (E_0, A_0)
+  \def\Ezero{0}      % \overline{E}(\text{present-day})
+  \def\Azero{0.2}    % A(\text{present-day})
+
+  % Automated Coder point (E_AC, 1)
+  \def\Eac{8}        % \overline{E}_{\text{AC}}
+
+  % ----- DERIVED PARAMETERS: k and E_m -----
+  % k = (1/(E_AC - E_0)) * ln( ((U/A0 - 1)/(U - 1)) )
+  \pgfmathsetmacro{\k}{
+    ln((\U/\Azero - 1)/(\U - 1))/(\Eac - \Ezero)
+  }
+
+  % E_m = E_0 + (1/k)*ln(U/A0 - 1)
+  \pgfmathsetmacro{\Emid}{
+    \Ezero + (1/\k)*ln(\U/\Azero - 1)
+  }
+
+  % ----- LOGISTIC CURVE -----
+  \addplot[thick]
+    ({x},{ min(1, \U/(1 + exp(-\k*(x - \Emid)))) });
+
+  % Mark present-day point
+  \addplot[mark=*] coordinates {(\Ezero,\Azero)};
+  \node[anchor=north west] at (axis cs:\Ezero,\Azero)
+    {$\big(\overline{E}(\text{present}),\,A(\text{present})\big)$};
+
+  % Mark Automated Coder point
+  \addplot[mark=*] coordinates {(\Eac,1)};
+  \node[anchor=south east] at (axis cs:\Eac,1)
+    {$\big(\overline{E}_{\text{AC}},\,1\big)$};
+
+  \end{axis}
+\end{tikzpicture}
+\caption{Coding automation fraction as a logistic function of log(effective compute).}
+\end{figure}
+\end{comment}
+
+\subsection{Coding automation efficiency} \label{Coding automation efficiency}
+
+We use indices $i$ in the interval $[0,1]$ to represent the various coding tasks involved in implementing research experiments. At any given time $t$, tasks $i$ such that $0 \leq i \leq A(t)$ are considered efficiently automatable, while tasks $i$ such that $A(t) < i \leq 1$ are not.
+
+For each task $i$, the coding automation efficiency $\eta_i(t)$ is the conversion rate between units of automation compute (i.e. H100-equivalents) and the equivalent in human coders. In other words, if $C_{\text{aut}, i}(t)$ is the amount of compute assigned to task $i$, then this corresponds to having $\eta_i(t) \, C_{\text{aut}, i}(t)$ additional human coders work on task $i$. So $\eta_i(t)$ is a measure of the runtime efficiency of AIs for task $i$; efficiency gains come from a combination of making AIs faster, being able to run more AIs, and getting more capable AIs that can complete tasks with fewer actions.
+
+% To model how efficiently AIs can do coding tasks, we decided that once a task is efficiently automatable, the automation efficiency $\eta_i(t)$ should increase with effective compute in a power-law fashion.
+
+Writing $E_i$ for the effective compute corresponding to when task $i$ is first efficiently automatable, our model for $\eta_i(t)$ is:
+\[ \eta_i(t) = \begin{cases} \eta_{\text{init}} \cdot \left(\frac{E(t)}{E_i}\right)^{\eta_{\text{slope}}} & \text{if task $i$ is efficiently automatable by time $t$;}\\ 0 & \text{otherwise;} \end{cases}\]
+where $\eta_{\text{init}}$ is a parameter representing the initial efficiency when a task first gets automatable, and $\eta_{\text{slope}}$ is a parameter controlling how quickly automated coders’ efficiency continues to improve afterward. This can be intuitively understood as:
+\[ \text{each doubling of effective compute $E$}\]
+\[\downarrow\]
+\[\text{$\eta_{\text{slope}}$ doublings of coding automation efficiency.}\]
+By \hyperref[When is a task considered efficiently automatable?]{our definition} of when a coding task is efficiently automatable, the initial conversion rate $\eta_{\text{init}}$ is the ratio of the total number of human coders to the amount of automation compute in the present-day.
+
+This model of automation efficiency $\eta_i(t)$ makes the simplifying assumption that the relationship between effective compute and efficiency stays consistent across different efficiency levels, which is technically false. However, we think changing this would not substantially affect results.
+
+\subsection{Aggregate coding labor} \label{Aggregate coding labor}
+
+We next discuss how the increasing AI coding abilities feed back into \textit{aggregate coding labor}, which in turn influences experiment throughput. Recall that experiment throughput (i.e. the capacity of the project to implement and run experiments) was a function of coding labor and experiment compute, and coding labor $L_C(t)$ was described as ``the number of full-time-human-equivalents". We want $L_C(t)$ to account for both human coding labor and AI coding labor, so we now call it ``aggregate coding labor". The number of human coders will be denoted by $L_{C,H}(t)$ instead.
+
+Recall that we use indices $i$ in the interval $[0,1]$ to represent the different coding tasks involved in implementing AI experiments. We write $L_{C,H,i}(t)$ and $C_{\text{aut},i}(t)$, respectively, for the amount of human coding labor and AI coding labor allocated to task $i$. The aggregate coding labor for task $i$ is
+\[ G_i(t) = L_{C,H,i}(t) + \eta_i(t) \cdot C_{\text{aut},i}(t),\]
+since $\eta_i(t)$ is the conversion rate between units of automation compute and human coders for task $i$.
+
+If AIs cheaply automate some coding tasks but not others, what effects will that have on coding labor? This depends how much one can substitute the automatable tasks for the non-automatable tasks. But if $G_i(t)$ goes to infinity for, say, 90\% of the tasks, this shouldn't cause $L_C(t)$ to go to infinity since coding will then bottleneck on the remaining 10\% of tasks. We choose to model this using a task-based CES (``constant elasticity of substitution") production function with a parameter $\rho_C < 0$ that controls the level of substitutability. We are unsure about how well task-based CES functions model reality, and there are known issues with them [\ETODO{cite}], but they are the best tool we know of for this job (we'd be interested in work that more granularly models the coding workflow).
+
+\textbf{Expandable: Explicit formula for $L_C(t)$.}
+\[ L_C(t) = \left( \int_0^1 G_i(t)^{\rho_C} \, di \right)^{1/\rho_C} = \left(\int_0^1 (L_{C,H,i}(t) + \eta_i(t) \cdot C_{\text{aut}, i}(t))^{\rho_C} \, di \right)^{1/\rho_C}.\]
+\textbf{End of expandable}
+
+\textit{What is $\rho_C$?} The smaller the substitution parameter $\rho_C < 0$, the more coding bottlenecks on the tasks with little coding labor. Put differently, $\rho_C$ much smaller than 0 would mean coding AI experiments is a fairly rigid set of tasks that must always be done, and $\rho_C$ close to 0 would mean that one can more easily substitute easy-to-automate tasks for hard-to-automate tasks. %\ESUG{$\rho_c = -\infty$ would correspond to ``Amdahl's Law," i.e. no substitution between tasks, meaning that being able to accomplish 90\% of tasks infinitely would lead to a 10x increase in $L_C(t)$. As $\rho_c$ approaches 0, $L_C(t)$ would approach $\infty$} \ASUG{I think we should not mention this.}
+
+When running simulations of our model, at each timestep we set the allocations $L_{C,H,i}(t)$ and $C_{\text{aut},i}(t)$ to maximize the aggregate coding labor $L_C(t)$ (subject to the constraints that the allocations $L_{C,H,i}$ sum to the total human coding labor $L_{C,H}(t)$ and the allocations $C_{\text{aut},i}(t)$ sum to the total automation compute $C_{\text{aut}}(t)$). This corresponds to the AI project allocating its human and AI coding workforce to where it's most useful; more concretely, the human coders will be reallocated to tasks that still evade automation while the AI coders will be allocated to the tasks they can efficiently automate (especially those tasks they can automate very quickly).
+
+\section{Experiment selection automation}\label{Experiment selection automation}
+
+Experiment selection skill (called ``research taste" in our prior work) intuitively measures the value one gets per experiment. Doubling experiment selection skill would have the same effect on progress as doubling experiment throughput (that is, as doubling the number of experiments the project can implement per unit time). We take an expansive definition of experiment selection, including: high-level research direction setting, low-level choices, and experiment ideation and interpretation. 
+
+In this section we explain our model of how AIs' experiment selection skill improves with effective compute and how the experiment selection skills of humans and AIs combine to give the aggregate experiment selection skill. 
+
+We discussed how Stage 1 of our model between the present-day and the Automated Coder milestone is largely driven by extrapolating the METR time horizon trend (and deciding whether to extrapolate with an exponential, a superexponential, or a subexponential). Stage 2 of the model behavior, once the Automated Coder milestone is reached, is largely driven by how quickly the experiment selection skill of the AIs increases with effective compute, as well as the AIs' initial experiment selection skill at the Automated Coder milestone. The complete automation (and speedup) of coding also plays a notable role, but based on our model simulations the rate at which AIs improve at experiment selection is a bigger driver. Intuitively, additional coding labor can only help so much because the ability to run experiments will eventually bottleneck on experiment compute. On the other hand, it's always helpful to have more skillful automated selection of experiments.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{Stage2.png}
+\end{figure}
+
+\subsection{Human experiment selection skill} \label{Human experiment selection skill}
+
+%\ASUG{Check whether it's mean 1 or median 1.}
+
+Before we get to improvements in automated experiment selection, we should discuss our model of human experiment selection skill. We model the distribution of experiment selection skill of human researchers (at a leading AGI company) with a lognormal distribution $T_H$ of median 1 (``lognormal" means $\log (T_H)$ is a normal distribution). To choose the variance of the lognormal, we first estimated the ratio $T_\text{spread}$ between the experiment selection skill of the top current researcher and that of the current median researcher (at a leading AGI company), via surveys of frontier AI researchers. Assuming an AGI company today has 1000 human researchers, this leads us to choose the lognormal $T_H$ to have a ratio of $T_\text{spread}$ between the $99.9^{\text{th}}$ percentile value of $T_H$ and the median value of $T_H$. (Later we will use that the $99.9^{\text{th}}$ percentile value of $T_H$ corresponds to three standard deviations above the median of the underlying normal distribution.)
+
+\ASUG{I like the idea of still presenting the human experiment selection skill as a lognormal, even if we technically have a distribution that's not quite a lognormal, since it's simpler to talk about a lognormal and it's accurate within and near the human range. Maybe I need a footnote to flag this though.}
+
+\ESUG{Well it's not technically accurate in any human range right, just inaccurate to various degrees? I think I'm fine with having it as is but with a footnote though, or if we don't have footnotes then perhaps in expandable?}
+
+\textbf{Expandable: Why use a lognormal distribution for experiment selection skill?} We choose a lognormal distribution because based on surveys of and discussions with frontier AI researchers, it seems likely that the top few percent of researchers provide much more value via experiment selection than typical researchers. Additionally, analogous quantities like scientific citation counts or startup success are often empirically lognormal. \textbf{End of expandable}
+
+\begin{comment}
+\subsection{Automated experiment selection skill}
+
+As for coding automation fraction and efficiency, the automated experiment selection skill $T_{AI}(t)$ is modeled as a function of effective compute. Whereas we represent the human experiment selection skill by a lognormal distribution $T_H \sim \text{Lognormal}\left(\mu, \sigma^2 \right)$, $T_{AI}(t)$ is a single number for each time $t$ (we think of the AIs as a single collective entity, unlike for humans).
+
+We describe the AIs' experiment selection skill in terms of how many standard deviations $\sigma$ (of the underlying normal of the human distribution) above or below the human median it is, and write $T_{AI}^{SD}(t)$ for this quantity. If $T_{AI}^{SD}(t)$ is negative, this means the AIs' experiment selection skill is below the human median; and if $T_{AI}^{SD}(t)$ is positive, this means the AIs' experiment selection skill is above the human median. We assume the AIs' experiment selection skill increases by $T_{\text{rate}}$ standard deviations for each additional OOM (order of magnitude) of effective compute:
+\[ T_{AI}^{SD}(t) = T_{\text{AC}} + T_{\text{rate}} \left( \overline{E}(t) - \overline{E}_{\text{AC}} \right) \quad \text{in human standard deviations $\sigma$}.\]
+Here $T_{\text{AC}}$ is a model parameter for the experiment selection skill of the Automated Coder, and $\overline{E}_{\text{AC}} = \log(E_{\text{AC}})$ is the effective compute corresponding to the Automated Coder.
+
+\textbf{Expandable: Explicit formula for $T_{AI}(t)$}
+Moving from standard deviations to absolute units, the AIs' experiment selection skill is
+\[ T_{AI}(t) = \exp\left(\mu + \sigma \, T_{AI}^{SD}(t) \right),\] 
+where $\mu$ and $\sigma$ were the parameters for the human experiment selection skill distribution $T_H \sim \text{Lognormal}\left(\mu, \sigma^2 \right)$.
+\textbf{End of expandable}
+
+\end{comment}
+
+\subsection{Automated experiment selection skill} \label{Automated experiment selection skill}
+
+As for \hyperref[Coding automation]{coding automation fraction and efficiency}, the automated experiment selection skill $T_{AI}(t)$ is modeled as a function of effective compute. Whereas we represent the human experiment selection skill by a lognormal distribution $T_H \sim \text{Lognormal}(0, \sigma^2)$, $T_{AI}(t)$ is a single number for each time $t$ (we think of the AIs as a single collective entity, unlike for humans).
+
+We describe the AIs' experiment selection skill in terms of how many standard deviations $\sigma$ (of the underlying normal of the human distribution) above or below the human median it is, and write $T_{AI}^{SD}(t)$ for this quantity. If $T_{AI}^{SD}(t)$ is negative, this means the AIs' experiment selection skill is below the human median; and if $T_{AI}^{SD}(t)$ is positive, this means the AIs' experiment selection skill is above the human median. We assume the AIs' experiment selection skill increases by $T_\text{rate}$ standard deviations for each additional OOM (order of magnitude) of effective compute:
+\begin{equation} \label{TAISD}
+T_{AI}^{SD}(t) = T_{\text{AC}} + T_\text{rate} \left(\overline{E}(t) - \overline{E}_{\text{AC}} \right) \quad \text{in human standard deviations $\sigma$}.
+\end{equation}
+Here $T_{\text{AC}}$ is a parameter for the experiment selection skill of the Automated Coder, and $\overline{E}_{\text{AC}} = \log(E_{\text{AC}})$ is the effective compute corresponding to the Automated Coder.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{T_AI.png}
+\end{figure}
+
+\subsubsection{Near the human range}
+
+While the AIs' experiment selection skill is near the human range, the AIs' experiment selection skill $T_{AI}(t)$ (in absolute units now, not standard deviations) is \textit{approximately} obtained by converting from the normal distribution back to the lognormal distribution. That is, $T_{AI}(t) \approx e^{\sigma T_{AI}^{SD}(t)}$ when the AIs are near the human range; and so by our expression (\ref{TAISD}) for $T_{AI}^{SD}$, each additional OOM of effective compute means multiplying the AIs' experiment selection skill by approximately $e^{T_\text{rate} \sigma}$.
+
+In \hyperref[Human experiment selection skill]{Human Experiment Selection Skill}, we assumed that the $99.9^\text{th}$ percentile human researcher (i.e. the best human researcher in a population of 1000) has experiment selection skill $T_\text{spread}$ times greater than the median human researcher. This $99.9^{\text{th}}$ percentile researcher corresponds to (roughly) 3 standard deviations above the median (since roughly $99.9\%$ of the area under a normal distribution bell curve is to the left of 3 standard deviations above the median; e.g. see the bell curve picture above). This all means that $e^{3 \sigma} = T_\text{spread}$. So, \textbf{near the human range}, we have:
+\[ \text{$T_{AI}^{SD}$ increases by 1} \quad \xrightarrow{\text{means}} \quad \text{$T_{AI}$ is multiplied by $e^\sigma = \left(T_\text{spread}\right)^{1/3}$}.\]
+Combining with (\ref{TAISD}), \textbf{near the human range} we have:
+\[ \text{1 OOM of effective compute} \quad \xrightarrow{\text{means}} \quad \text{$T_{AI}$ is multiplied by $\left(T_\text{spread}\right)^{T_\text{rate}/3}$}.\]
+
+\subsubsection{Our more general model of $T_{AI}$ addressing algorithmic limits} \label{Algorithmic limits}
+
+Our actual model for $T_{AI}(t)$ is a bit more complicated, because we want to incorporate an upper bound for how high experiment selection skill can get. So while initially each increment of $T_{AI}^{SD}$ by 1 results in a multiplier of roughly $\left(T_\text{spread}\right)^{T_\text{rate}/3}$, eventually $T_{AI}(t)$ plateaus when $T_{AI}^{SD}$ gets very large. We also think the rate of progress in experiment selection skill should slow down gradually, rather than abruptly, as we approach the upper limit.
+
+So, we use a kind of generalized logistic function as our model of $T_{AI}$ as a function of $T_{AI}^{SD}$. It's illustrated in the following graph (the orange dotted line is explained later):
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{Tvsx.png}
+   % \caption{Near the human range (i.e. $T_{AI}^{SD} \approx 0$), each SD multiplies $T_{AI}$ by $T_{\text{spread}}^{1/3}$. When $T_{AI} = A^{1/2}$ (i.e. $T_{AI}$ is halfway to algorithmic limits in log scale), each SD multiplies $T_{AI}$ by $T_{\text{spread}}^{L/3}$. The graph uses our default values of $L = 0.51$, $T_{\text{spread}} = 3.7$, and $A = 3.7^9 \approx 130000$.}
+\end{figure}
+
+Near the human range (i.e. when $T_{AI}^{SD}$ is near 0), $T_{AI}$ is approximately equal to $e^{\sigma T_{AI}^{SD}} = \left(T_\text{spread}\right)^{T_{AI}^{SD}}$. % Should talk about how we choose these parameters of course.
+We also have a parameter $0 < L < 1$ (called the ``experiment selection slowdown factor halfway to algorithmic limits") which controls how quickly $T_{AI}$ approaches the upper limit $A$ as a function of $T_{AI}^{SD}$. %(Officially, $L$ is equal to $\sigma \frac{d}{d T_{AI}^{SD}} T_{AI}$.)
+$L$ is interpreted as follows: at the point when $T_{AI}$ is halfway between 1 and $A$ in log space (i.e. when $T_{AI} = A^{1/2}$), increasing $T_{AI}^{SD}$ by $1$ means multiplying $T_{AI}$ by $e^{L \sigma} = \left(T_\text{spread}\right)^{L/3}$ (so the growth rate is $L$ times what it was in the human range once we reach the halfway point, in log scale). The bigger $L$ is, the steeper the orange dotted line is, and the faster $T_{AI}$ approaches the limit $A$. The graph uses a value of $L = 0.51$.
+
+\ESUG{This doesn't seem to make any reference to how SDs relative to human range are defined (as I defined it in my Slack message) and how that is the thing that has a relationship with actual experiment selection skill. Why is this not discussed? Seems important. This definition of SDs is also used for defining SIAR and ASI.}
+
+
+\textbf{Expandable: Mathematical details about expressing $T_{AI}$ as a function of $T_{AI}^{SD}$.}
+Our model for $T_{AI}$ is
+\[ T_{AI} = \left( A^\rho + (1-A^\rho) e^{\rho v T_{AI}^{SD}}\right)^{1/\rho}.\]
+As above, $A$ is the experiment selection skill upper bound. The parameter $\rho$ (which can be positive or negative) is related to the parameter $L$ mentioned earlier, and controls how quickly the upper bound of $A$ is reached; explicitly (see the derivation below), we have
+\begin{equation} \label{rho}
+\rho = \frac{2 \ln\left(\frac{1}{L}-1\right)}{\ln A}.
+\end{equation}
+Finally,
+\begin{equation} \label{v}
+v = \frac{\sigma}{1-A^\rho} > 0
+\end{equation}
+is chosen so that $T_{AI} \approx e^{\sigma T_{AI}^{SD}}$ near $T_{AI}^{SD} = 0$ (more precisely, we choose $v$ so that $\frac{d}{d T_{AI}^{SD}}\ln(T_{AI}) = \sigma$ at $T_{AI} = 0$; see the derivation below).
+
+When $\rho < 0$, i.e. $L > 0.5$, we can rearrange $T_{AI}(t)$ into a more interpretable logistic-sigmoid form:
+\begin{equation} \label{strange logistic}
+T_{AI} = \frac{A}{\left(1+Ce^{-D \, T_{AI}^{SD}} \right)^{B}},
+\end{equation}
+where $B = -\frac{1}{\rho} > 0$, $C = A^{-\rho} - 1 > 0$, and $D = \frac{-\rho \sigma}{1-A^\rho} > 0$. In particular, as $T_{AI}^{SD}(t)$ gets big, this expression shows that $T_{AI}(t)$ asymptotes to $A$. When $\rho > 0$, i.e. $L < 0.5$, the expression is still correct, but is a bit stranger since now $B < 0$ and $C < 0$. In particular, when $\rho > 0$, $T_{AI}$ is undefined when $T_{AI}^{SD} \leq \ln(-C)/D$. Varying $L$ (i.e. $\rho$) in a graphing application showed there weren't important changes in the shape of the $T_{AI}$ vs $T_{AI}^{SD}$ curve, at least in the range of $T_{AI}^{SD}$ values that matter for the model. All the curves look roughly like the one in the figure shown previously.
+
+\textbf{The reader can safely skip the following two derivations.}
+
+\textit{Derivation of the formula for $v$}: As mentioned, we choose $v$ so that $\frac{d}{d T_{AI}^{SD}} \ln(T_{AI}) = \frac{1}{T_{AI}} \cdot \frac{d T_{AI}}{d T_{AI}^{SD}} = \sigma$ at $T_{AI} = 0$. We have
+\begin{equation} \label{dTAI}
+\begin{aligned}
+\frac{d T_{AI}}{d T_{AI}^{SD}} &= \frac{d}{d T_{AI}^{SD}} \left(A^\rho + (1-A^\rho) e^{\rho v T_{AI}^{SD}}\right)^{1/\rho} \\
+&= (1-A^\rho) \rho v e^{\rho v T_{AI}^{SD}} \cdot \frac{1}{\rho} \left(A^\rho + (1-A^\rho) e^{\rho v T_{AI}^{SD}}\right)^{1/\rho - 1}.
+\end{aligned}
+\end{equation}
+Evaluating $\frac{d}{d T_{AI}^{SD}} \ln(T_{AI}) = \frac{1}{T_{AI}} \cdot \frac{d T_{AI}}{d T_{AI}^{SD}}$ at $T_{AI}^{SD} = 0$ gives:
+\[ \left.\frac{1}{T_{AI}}\frac{d T_{AI}}{d T_{AI}^{SD}}\right|_{T_{AI}^{SD} = 0} = (1-A^\rho) v.\]
+So if we want this quantity to equal $\sigma$, we should take $v = \frac{\sigma}{1-A^\rho}$.
+
+\textit{Derivation of the formula for $\rho$}: The defining property of $L$ is
+\begin{equation} \label{L}
+\left.\frac{d \ln(T_{AI})}{d T_{AI}^{SD}} \right|_{T_{AI} = A^{1/2}} = L \sigma.
+\end{equation}
+Using (\ref{dTAI}) and $v = \frac{\sigma}{1-A^\rho}$, we have
+\[
+\left. \frac{d \ln(T_{AI})}{d T_{AI}^{SD}}\right|_{T_{AI} = A^{1/2}} = \left.\frac{1}{T_{AI}}\frac{d T_{AI}}{d T_{AI}^{SD}} \right|_{T_{AI} = A^{1/2}} = \frac{\sigma e^{\rho v T_{AI}^{SD}} A^{1/2} A^{-\rho/2}}{A^{1/2}} = \frac{\sigma e^{\rho v T_{AI}^{SD}}}{A^{\rho/2}},
+\]
+where in this formula $T_{AI}^{SD}$ stands for the point where $T_{AI} = A^{1/2}$. The numerator can be rewritten as
+\[ \frac{\sigma \left(T_{AI}^\rho - A^\rho\right)}{1-A^\rho} = \frac{\sigma \left(A^{\rho/2}-A^\rho\right)}{1-A^\rho} = \frac{\sigma A^{\rho/2} \left(1-A^{\rho/2}\right)}{1-A^\rho} = \frac{\sigma A^{\rho/2}}{1+A^{\rho/2}}.\]
+Putting everything together, our condition becomes
+\[ L \sigma = \frac{\sigma}{1+A^{\rho/2}},\]
+in other words
+\[ L = \frac{1}{1+A^{\rho/2}}.\]
+Solving for $\rho$ in terms of $L$ and $A$ gives:
+\[ \rho = \frac{2 \ln\left(\frac{1}{L}-1\right)}{\ln(A)}.\]
+
+
+
+
+
+%\ESUG{Would be nice to explain how we fit the parameters using the halfway slope thing. I'm also interested in what rho and A are with our default parameters, and maybe we should have a sentence explainng how we set A.}
+\textbf{End of expandable}
+
+\subsection{Aggregate experiment selection skill} \label{Aggregate experiment selection skill}
+
+The aggregate experiment selection skill $T(t)$ measures the average value per experiment, when one accounts for both human and AI experiment selection skill. When the AIs' experiment selection skill becomes better than that of the best human researcher, then $T(t)$ is just $T_{AI}(t)$. Before that's the case, our model assumes that each human researcher with lower skill than the AIs is lifted up to the level of the AIs.
+
+For each time $t$, we then define the aggregate experiment selection skill as the average of the experiment selection skills of the human researchers uplifted by the AIs (recall that $T_H$ was a certain lognormal distribution):
+\begin{equation} \label{TAI} 
+T(t) = \mathbb{E} \left[ \max\left(T_H, T_{AI}(t)\right)\right].
+\end{equation}
+For example, if $T_{AI}(\text{July 2030}) = 2$, then the aggregate experiment selection skill in July 2030 is $\mathbb{E} \left[ \max \left(T_H, 2\right) \right]$ (humans with experiment selection skill less than 2 are now thought to have experiment selection skill 2, and humans with experiment selection skill greater than 2 are not affected). And if $T_{AI}(t)$ is larger than the experiment selection skill of the best human researcher for later $t$, then (\ref{TAI}) reduces to $T_{AI}(t) = T(t)$.
+
+We currently do not model the \textit{quantity} of labor doing experiment selection, and believe this would likely not drastically change results, since for experiment selection, quality matters much more than quantity. That said, this is an important limitation of our model.
+
+\section{How does our model behave after full AI R\&D automation?} \label{SIE section}
+
+In the introduction, we discussed how our model's progression could be carved up into three natural stages.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{stages.png}
+\end{figure}
+
+Stage 3 kicks off once the superhuman AI researcher (SAR) milestone is reached; AI software R\&D is then fully automated and human researchers no longer add additional value. At this point, there are two qualitatively different possibilities:
+\begin{enumerate}
+\item \textbf{There is a software intelligence explosion (SIE), meaning that software efficiency doublings (as well as doublings of AIs' experiment selection skill) get faster and faster over time, even while the stock of compute remains unchanged.} In other words, the AI R\&D feedback loop (gains in experiment selection skill lead to gains in software efficiency, which lead to more gains in experiment selection skill) accelerates over time. In our model, this accelerated feedback loop continues until the AIs approach algorithmic limits of experiment selection skill (to be precise, the feedback loop may slow down quite a bit before reaching algorithmic limits since the conversion rate of software efficiency into experiment selection skill smoothly decays over time, rather than abruptly stopping at the limit of experiment selection skill; see \hyperref[Algorithmic limits]{this previous section}).
+\item \textbf{There is no software intelligence explosion, because the rate at which valuable research ideas are getting harder to find outpaces improvements in AIs' experiment selection skill.} %\ESUG{My guess is that we should explain a bit more why ideas and improvements are getting harder to find, intuitively.}
+Doublings of software efficiency get longer and longer (at least keeping compute fixed). Increases in AI capabilities become more dependent on increasing compute and this leads to a longer takeoff period.
+\end{enumerate}
+
+%An SIE is worrisome because it's strongly correlated with a fast takeoff, as well as the possibility that an AI project could surreptitiously do an intelligence explosion without having to acquire a large amount of extra compute.
+%\ESUG{Not sure we want to say "worrisome," imo writeup should be objective/netural about whether we want fast or slow takeoff.}
+
+In this section, we explain when our model predicts an SIE. That is, \textbf{we identify a simple condition on our model parameters that corresponds to an SIE (i.e. doublings of software efficiency getting faster and faster over time, without an increase in compute)}. We assume all types of compute (training compute, experiment compute, automation compute) are constant. %\ESUG{Not sure if we need to include, but note naively one might think that compute in largest training run might still be increasing a bit, though on the other hand maybe software improvements require restarting trainig runs. We should probably make more clear that we assume that compute in largest training run is constant, not stock of compute used for training.}
+In that case, \hyperref[Experiment throughput]{experiment throughtput} (i.e. number of experiments the AGI project can run) will heavily bottleneck on experiment compute, so we assume experiment throughput is constant. Also, gains in \hyperref[Effective compute]{effective compute} will only come from gains in software efficiency (not training compute).
+
+\textbf{The conclusion is that our model predicts an SIE when}
+\[\frac{m}{\beta} > 1,\]
+where $m = T_\text{rate} \log(\left(T_\text{spread}\right)^{1/3})$ is the number of OOMs of automated experiment selection skill you get for each new OOM of effective compute (see \hyperref[Automated experiment selection skill]{Automated Experiment Selection Skill}), and $\beta$ is a parameter measuring how difficult it is to find impactful new software research ideas (see \hyperref[Software efficiency]{Software Efficiency}). Intuitively, $m/\beta > 1$ means that the rate of improvements in AIs' experiment selection skill outpace the rate at which ideas get harder to find.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{SIE.png}
+\end{figure}
+
+\textit{What is $m$ again?} In our model of \hyperref[Automated experiment selection skill]{Automated Experiment Selection Skill}, we assumed each new OOM of effective compute means the AIs' experiment selection skill goes up by $T_\text{rate}$ standard deviations (of the normal distribution underlying the (approximately) lognormal distribution of human experiment selection skill). $T_\text{spread}$ was the ratio of the experiment selection skills between the best human researcher and the median human researcher and it corresponded to 3 standard deviations (this 3 leads to the 1/3 exponent below). All in all, \hyperref[Automated experiment selection skill]{our model of AIs' experiment selection skill $T_{AI}$} tells us that, at least when the AIs are far from algorithmic limits, each new OOM of effective compute results in multiplying $T_{AI}$ by approximately
+\[ \left(T_\text{spread}\right)^{T_\text{rate}/3} = 10^{T_\text{rate} \log(\left(T_\text{spread}\right)^{1/3})}.\]
+That is, each new OOM of effective increases $T_{AI}$ by (approximately) $m = T_\text{rate} \log(\left(T_\text{spread}\right)^{1/3})$ OOMs. Since we're assuming compute is fixed (to analyze whether there's a \textit{software} intelligence explosion), increases in effective compute come from increases in software efficiency. Because we're assuming that experiment throughput is constant (since experiment compute bottlenecks prevent the project from running more experiments), and also that aggregate experiment selection skill is just automated experiment selection skill (since human researchers are no longer adding value), gains in AIs' experiment selection skill correspond to gains in research effort. Putting everything together, $m$ satisfies
+\begin{equation} \label{m}
+\text{1 OOM of software efficiency $S$} \quad \xrightarrow{\text{gives}} \quad \text{$m$ OOMs of research effort $RE$}.
+\end{equation}
+
+\textit{What is $\beta$ again?} In \hyperref[Software efficiency]{Software Efficiency}, we introduced research stock $RS(t)$ as the total amount of research effort done by time $t$. Our model was:
+\begin{equation} \label{RS to S}
+\text{$\beta$ OOMs of research stock $RS$} \quad \xrightarrow{\text{means}} \quad \text{1 OOM of software efficiency $S$}.
+\end{equation}
+The bigger $\beta$ is, the harder it is to discover impactful software research ideas (that will increase software efficiency).
+
+%\ESUG{I would try to make the end of this section provide a better understanding to those who don't want to read the expandable (and also those who do, tbh, I think the below would be helpful for both audiences). I would say something like: m is the number of OOMs of RE for each OOM of S, while beta is the number of OOMs of RS needed to get an OOM of S. Therefore, intuitively, if $m>\beta$, each OOM of S gets faster and faster, if you assume that RS growth rate is the same as RE (which is derived in the expandable). m can be broken down into the number of SDs/S OOM and the amount of ES Skill/SD. SDs/S OOM is parameterized in $T_{rate}$, ES Skill/SD can be found with $\log(T_{spread}^{(1/3)})$ because there are 3 SDs between the median and best human in a poopulation of 1,000.}
+
+\ATODO{Need to take care of this comment later when I make a big pass to explain parameters more.}
+\ESUG{$\beta$ is automatically set in our model to ensure that the 2024 software efficiency growth rate is equal to the value of an input parameter. $\beta$ is affected by lots of parameters, but for example parameters A B and C are particularly important for setting $\beta$, and they affect $\beta$ in X way. With Eli's median parameter estimates, $m=A$ (show how we get this) and $\beta=B$, meaning that there isn't an SIE, but in X\% of simulations with Eli's distributions we do get one.}
+
+\textbf{Expandable: Math details justifying the $m/\beta > 1$ condition for an SIE.} We want to identify when an SIE occurs, i.e. when doubling times of software efficiency are getting shorter and shorter (before progress slows down because of algorithmic limits). A clean way to do this is to use the semi-endogenous growth model formulation of the relationship between research effort $RE$ and software efficiency $S$ (see the \hyperref[Jones model]{the expandable box here}):
+\begin{equation} \label{Jones}
+S'(t) = a S(t)^{1-\beta} RE(t), \quad \text{for some constant $a > 0$}.
+\end{equation}
+A useful way to measure the rate of change of $S$ in OOMs is to look at the derivative of the logarithm of $S$ (because the formula is easier, we use the natural logarithm $\ln$). We call this the growth rate of $S$ and write
+\[ g_S(t) = \frac{d}{dt} \ln(S(t)) = \frac{S'(t)}{S(t)}.\]
+Dividing both sides of (\ref{Jones}) by $S(t)$ yields
+\begin{equation} \label{gS}
+g_S(t) = a S(t)^{-\beta} RE(t).
+\end{equation}
+There is an SIE if $g_S$ gets bigger over time (at least before progress slows due to algorithmic limits).
+
+We want to express $RE(t)$ in terms of $S(t)$. As explained above, if we assume all types of compute are fixed, then whenever $S$ goes up by 1 OOM, $RE$ goes up by $m$ OOMs. This is equivalent to saying that $RE$ and $S$ satisfy a power law relationship:
+\[ RE(t) = C \, S(t)^m, \quad \text{where $C$ is a constant}.\]
+Plugging this back into (\ref{gS}) gives
+\[ g_S(t) = a C S(t)^{m-\beta}.\]
+This expression shows that $g_S$ gets bigger with $S$ (i.e. $g_S$ gets bigger over time since $S$ increases over time) precisely when $m-\beta > 0$, i.e. $m/\beta > 1$. In other words, our model predicts an SIE precisely when $m/\beta > 1$.
+
+\textbf{Alternative justification treating time as discrete.} We give an alternative justification of the $m/\beta$ condition which treats time as discrete and avoids using the equation (\ref{Jones}). Treating time as discrete, we will write
+\[ RS(t+1) = RS(t) + RE(t).\]
+An SIE corresponds to the ratios $S(t+1)/S(t)$ getting larger over time, which by (\ref{RS to S}) also corresponds to the ratios $RS(t+1)/RS(t)$ getting larger over time.
+
+We show this happens precisely when $m/\beta > 1$. Suppose that $RS$ increased by $\ell$ OOMs between time $t$ and $t+1$:
+\[ RS(t+1) = 10^\ell RS(t).\]
+By (\ref{RS to S}),
+\[ S(t+1) = 10^{\ell/\beta} S(t).\]
+By (\ref{m}),
+\[ RE(t+1) = 10^{\ell m/\beta} RE(t).\]
+If we now look at $RS(t+2)$, we get
+\begin{equation} \label{eq}
+RS(t+2) = RS(t+1) + RE(t+1) = 10^\ell RS(t) + 10^{\ell m/\beta} RE(t).
+\end{equation}
+Consider first the ``knife-edge" situation $m = \beta$. In that case, (\ref{eq}) becomes
+\[\begin{aligned}
+RS(t+2) &= 10^\ell RS(t) + 10^\ell RE(t) \\
+&= 10^\ell (RS(t) + RE(t)) \\
+&= 10^\ell RS(t+1),
+\end{aligned}\]
+so $RS(t+2)/RS(t+1)$ and $RS(t+1)/RS(t)$ are the same (both are equal to $10^\ell$). On the other hand, if $m/\beta > 1$, then (\ref{eq}) becomes
+\[\begin{aligned}
+RS(t+2) &= 10^\ell RS(t) + 10^{\ell m/\beta} RE(t) \\
+&> 10^\ell RS(t) + 10^\ell RE(t) \\
+&= 10^\ell (RS(t) + RE(t)) \\
+&= 10^\ell RS(t+1)
+\end{aligned}\]
+so $RS(t+2)/RS(t+1)$ is bigger than $RS(t+1)/RS(t) = 10^\ell$. And a similar analysis (just replacing $>$ with $<$) shows that if $m < \beta$, then $RS(t+2)/RS(t+1)$ is smaller than $RS(t+1)/RS(t) = 10^\ell$. In summary, the ratios $RS(t+1)/RS(t)$ get bigger over time, i.e. an SIE occurs, precisely when $m/\beta > 1$.
+\textbf{End of expandable}
+
+\begin{comment}
+\textbf{Second justification where time is treated as continuous.} Suppose software efficiency $S$ goes up by $n$ OOMs between time $t$ and $t+1$:
+\[ S(t+1) = 10^{n} S(t).\]
+As before, (\ref{m}) gives
+\[RE(t+1) = 10^{n m} RE(t).\]
+To determine if there is an SIE, we want to know whether $S$ will increase by \textit{more} than $n$ OOMs in the next interval between time $t+1$ and $t+2$. One clean way to do this is to use the semi-endogenous growth model formulation of the relationship between $RE$ and $S$ (see the \hyperref[Jones model]{expandable box here}):
+\begin{equation}
+S'(t) = S(t)^{1-\beta} RE(t).
+\end{equation}
+A useful way to measure the rate of change of $S$ in OOMs is to look at the derivative of the logarithm of $S$ (because the formula is easier, we use the natural logarithm $\ln$). We call this the growth rate of $S$ and write
+\[g_S(t) = \frac{d}{dt} \ln(S(t)) = \frac{S'(t)}{S(t)}.\]
+Dividing both sides of (\ref{Jones}) by $S(t)$ yields
+\[ g_S(t) = S(t)^{-\beta} RE(t).\]
+By our previous calculations,
+\[\begin{aligned}
+g_S(t+1) &= S(t+1)^{-\beta} RE(t+1) \\
+&= \left(10^n S(t)\right)^{-\beta} 10^{n m} RE(t) \\
+&= 10^{-\beta n} S(t)^{-\beta} \cdot 10^{n m} RE(t) \\ 
+&= 10^{n (m - \beta)} S(t)^{-\beta} RE(t) \\
+&= 10^{n (m-\beta)} g_S(t).
+\end{aligned}\]
+So $g_S(t+1)$ is larger than $g_S(t)$ when $m/\beta > 1$ (i.e. $m-\beta > 0$). In other words, our model predicts an SIE when $m/\beta > 1$.
+\end{comment}
+
+
+
+\ESUG{To dicuss whether we want some sort of recap section and/or nice version for econ/math people}
+\ASUG{Not a priority}
+
+
+
+
+
+\end{document}

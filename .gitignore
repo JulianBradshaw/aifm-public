@@ -1,0 +1,90 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+# the coverage data file itself, at any depth. `/coverage` above only matches
+# the report directory, which is why .coverage got committed twice.
+.coverage
+.coverage.*
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Python libraries installed locally
+PyYAML-*.dist-info/
+numpy-*.dist-info/
+scipy-*.dist-info/
+_yaml/
+numpy/
+scipy/
+yaml/
+bin/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.env*.local
+
+# Pytest
+.pytest_cache/
+
+# Test outputs
+tests/temp_outputs/
+
+.claude/*
+!.claude/commands/
+!.claude/skills/
+!.claude/agents/
+!.claude/agent-memory/
+
+.vscode/*
+
+outputs/
+
+scripts/latex/src/
+scripts/latex/out/
+
+# Monte Carlo rollout outputs pulled from the compute box (see scripts/pipelines/pull_mc_run.sh)
+/mc_outputs/

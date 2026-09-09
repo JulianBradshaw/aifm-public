@@ -1,0 +1,55 @@
+flowchart TD
+    %% Input nodes
+    subgraph Inputs
+        HL[Human labor]
+        IC[Inference compute]
+        EC[Experiment compute]
+        HRT[Human research taste]
+        TC[Training compute]
+    end
+
+    %% Automation nodes
+    subgraph Automation
+        CL[Coding labor]
+        ART[Aggregate research taste]
+    end
+
+    %% Software R&D nodes
+    subgraph Software R&D
+        EXC[Experiment capacity]
+        SRE[Software research effort]
+    end
+
+    %% Effective Compute node
+    subgraph Effective Compute
+        SE[Software efficiency]
+        EFC[Effective compute]
+    end
+
+    %% AI Capabilities nodes
+    subgraph AI Capabilities
+        SAF[SWE automation fraction]
+        TH[Time horizon]
+        AIRT[AI research taste]
+        %% SHC{Superhuman<br/>coder?}
+    end
+
+    %% Inflows to Automation
+    HRT & AIRT --> ART
+    SAF & HL & IC --> CL
+
+    %% Inflows to Software R&D
+    CL & EC --> EXC
+    ART & EXC --> SRE
+
+    %% Inflows to Effective Compute
+    SRE -.-> SE
+    TC & SE --> EFC
+
+    %% Inflows to AI Capabilities
+    EFC --> TH & AIRT & SAF
+
+    %% Test
+    %% TH --> SHC
+    TH -->|If Superhuman| SAF
+    TH -->|If Superhuman| AIRT

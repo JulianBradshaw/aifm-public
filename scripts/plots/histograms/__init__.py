@@ -1,0 +1,1 @@
+"""Histogram-based distribution plots."""

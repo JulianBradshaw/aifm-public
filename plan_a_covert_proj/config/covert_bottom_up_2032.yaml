@@ -1,0 +1,10 @@
+# Bottom-up covert scenario with a SHORT legal scaling window: inherits everything from
+# covert_bottom_up.yaml (bottom-up compute sizing, uncertain site size + leakage) and
+# overrides ONLY legal_scaling_duration to 2 years — with the default ~2029.1 pause +
+# 0.838y setup, the legal's target lands ~2032 (hence the filename).
+parent: covert_bottom_up.yaml
+
+covert_parameters:
+  legal_scaling_duration:
+    dist: fixed
+    value: 2

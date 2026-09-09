@@ -1,0 +1,20 @@
+# Optional AC-time conditioning for the covert pipeline (post-hoc importance reweighting).
+# NOT part of the default run — kept in its own file so it never perturbs the dataset hash /
+# triggers a re-simulation. Consumed only by:
+#   python -m plan_a_covert_proj.pipeline.ac_reweight <runid> --emit
+# which attaches per-rollout importance weights (Gaussian kernel on each rollout's AC time,
+# toward `target`) to the dataset and regenerates ALL figures into a SIBLING run dir
+# (<runid>__acrw...), so you can compare reweighted-vs-not in the viewer. No rollout is dropped
+# or duplicated — every figure uses all N rollouts with weights, and each reweighted figure is
+# stamped with its effective sample size (ESS) so the resolution cost is visible. CLI
+# --target / --sigma / --seed override these.
+#
+# enabled: master switch for the --emit step ONLY. It does NOT affect a normal run: the default
+# pipeline never reads this file, so the original run's figures are byte-identical whether this is
+# true or false. With enabled:false, `--emit` refuses (pass --enable to override for a one-off);
+# read-only `--sweep` / stats mode always works. Reweighting is therefore fully opt-in — it can
+# only ever produce a SEPARATE sibling run dir, never mutate the figures of the run it reads.
+enabled: true
+target: 2030.0    # AC year to condition on
+sigma: 0.3        # Gaussian-kernel bandwidth in years (smaller = tighter condition, lower ESS)
+seed: 0           # RNG seed reserved for any stochastic step (deterministic; weighting itself is exact)

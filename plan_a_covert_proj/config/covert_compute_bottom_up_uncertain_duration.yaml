@@ -1,0 +1,21 @@
+# Bottom-up covert-compute parameters — UNCERTAIN DIVERSION DURATION variant.
+#
+# Inherits every diversion knob from covert_compute_bottom_up.yaml and overrides ONLY
+# diversion_duration: instead of the fixed 1-year window (the supplement's high-end
+# anchor), the window length is lognormal with an 80% CI of [0.1, 2] years
+# (median ~0.45y). A longer draw diverts more world flow (smuggling + concealed
+# domestic) but anchors decommissioning to an earlier, smaller world stock; a short
+# draw is a last-minute scheme that grabs almost nothing.
+#
+# Use by pointing a covert config's `bottom_up_compute_config:` at this file instead of
+# covert_compute_bottom_up.yaml (requires `compute_mode: bottom_up_estimate`).
+
+parent: covert_compute_bottom_up.yaml
+
+bottom_up_compute_parameters:
+  diversion_duration:
+    dist: lognormal
+    ci80: [0.1, 2.0]
+    min: 0.0            # 10y cap is beyond the 99.6th pctile so it barely distorts, and it
+    max: 10.0           # keeps the window start within the input series (reaches back to 2017)
+    clip_to_bounds: true

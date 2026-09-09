@@ -1,0 +1,12 @@
+{
+  "build": {
+    "env": {
+      "PYTHONPATH": "."
+    }
+  },
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60
+    }
+  }
+}

@@ -1,0 +1,22 @@
+# Covert config — PAUSE AFTER AC variant.
+#
+# Inherits the base uncertain scenario (covert_uncertain.yaml) and changes ONLY the pause
+# lead: years_before_ac fixed at -0.25, i.e. the deal lands 0.25 years AFTER the default
+# project reaches AC (pause_year = AC + 0.25), instead of 0.838y before it. Everything
+# else — compute sizing, detection, tax, setup — is unchanged, so differences vs a
+# covert_uncertain.yaml run isolate the effect of pausing post-AC.
+#
+# Caveat: in fast-takeoff rollouts the default world can cross TED-AI (or even ASI)
+# within 0.25y of AC, so the pause lands after the target and both projects "arrive"
+# essentially instantly at the pause.
+#
+#   python -m plan_a_covert_proj.pipeline.run --num 2000 \
+#       --model-config plan_a_covert_proj/config/model_uncertain_thomas.yaml \
+#       --covert-config plan_a_covert_proj/config/covert_pause_after_ac.yaml
+
+parent: covert_uncertain.yaml
+
+covert_parameters:
+  years_before_ac:
+    dist: fixed
+    value: -0.25

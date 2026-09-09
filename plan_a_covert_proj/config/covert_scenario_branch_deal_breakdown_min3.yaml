@@ -1,0 +1,7 @@
+# Deal-breakdown scenario, CONDITIONED on the deal surviving the first 3 years
+# (no breakdown before then; draws come from the truncated survival curve S(t)/S(3)).
+# Everything else inherits from the deal-breakdown base.
+parent: covert_scenario_branch_deal_breakdown.yaml
+
+deal_breakdown:
+  min_survival_years: 3

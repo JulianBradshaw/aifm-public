@@ -1,0 +1,12 @@
+# Covert config — UNCERTAIN COVERT + LEGAL-NO-SOFTWARE variant.
+#
+# Inherits the base covert_uncertain.yaml (bottom-up covert sizing, uncertain per-site
+# power + leakage) and overrides ONLY legal_strategy: the legal makes NO tuned software
+# (target_year_capped_sw, max_sw_rate=0 from the base). Tests covert-size uncertainty
+# when theft of ongoing software is off.
+parent: covert_uncertain.yaml
+
+covert_parameters:
+  legal_strategy:
+    dist: fixed
+    value: target_year_capped_sw

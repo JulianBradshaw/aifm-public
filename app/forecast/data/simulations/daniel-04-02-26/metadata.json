@@ -1,0 +1,16 @@
+{
+  "id": "daniel-04-02-26",
+  "forecaster": "Daniel",
+  "date": "04-02-26",
+  "customIdentifier": null,
+  "sourceRunDir": "/root/ai-futures-calculator-1/outputs/results_20260331_212159/daniel/20260331_213219",
+  "modelVersion": null,
+  "exportedAt": "2026-03-31T22:35:55.113352",
+  "numSamples": 10000,
+  "presentDay": 2026.0959,
+  "timeRange": [
+    2017.0,
+    2200.0
+  ],
+  "seed": 42
+}

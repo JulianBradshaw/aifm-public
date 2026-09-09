@@ -1,0 +1,40 @@
+# Like model_uncertain_thomas.yaml, but the TIME-HORIZON params are UNFIXED — given Daniel's
+# uncertainty, RECENTERED on Thomas's AC=2030-tuned point values. So AC stays centered on ~2030
+# in the median, while the timeline params carry genuine (Daniel-width) uncertainty instead of
+# being pinned. Pair with `python -m plan_a_covert_proj.pipeline.ac_reweight <run> --target 2030.0`,
+# which conditions on AC≈2030 while MARGINALIZING the horizon uncertainty (rather than collapsing
+# it to a point).
+#
+# Recentering keeps Daniel's multiplicative spread s (= p90/median, symmetric in log) and moves
+# the median to Thomas's fixed value M:  new ci80 = [M/s, M*s]. Where Daniel's median already
+# equals Thomas's value, the Daniel dist is used as-is. (include_gap stays fixed "gap" — it
+# defines the pause scenario; present_horizon / present_day / extrapolation type are observables/
+# structure that Daniel also pins.)
+parent: model_uncertain_thomas.yaml
+
+parameters:
+  # acth: Daniel ci80 [6228, 2491200] -> median 1.246e5, s=20. Thomas M=1.230045e6 -> [M/20, M*20].
+  ac_time_horizon_minutes:
+    dist: lognormal
+    ci80: [61502.24, 24600895.24]
+    min: 960
+    max: 1e11
+  # gap length: Daniel ci80 [0.1, 4.9] -> median 0.7, s=7. Thomas M=1.103409 -> [M/7, M*7]
+  # (M tuned so default AC = 2030.00 on the updated input_data.csv series).
+  gap_years:
+    dist: lognormal
+    ci80: [0.157630, 7.723863]
+    min: 0.0
+    max: 1e30
+  # present_doubling_time: Daniel median 0.33284 already == Thomas value -> use Daniel's as-is.
+  present_doubling_time:
+    dist: lognormal
+    ci80: [0.2117, 0.5233]
+    min: 0.01
+    max: 2
+  # doubling_difficulty_growth_factor: Daniel normal centered 0.92 == Thomas value -> as-is.
+  doubling_difficulty_growth_factor:
+    dist: normal
+    ci80: [0.82, 1.02]
+    min: 0.6
+    max: 1.02

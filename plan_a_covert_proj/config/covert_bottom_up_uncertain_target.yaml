@@ -1,0 +1,12 @@
+# Bottom-up covert scenario with an UNCERTAIN legal scaling window: inherits everything
+# from covert_bottom_up.yaml (bottom-up compute sizing, uncertain site size + leakage)
+# and overrides ONLY legal_scaling_duration, making the legal's target year uncertain —
+# uniform over 1–8 years from the end of the setup pause (spanning the fixed 2y/8y
+# covert_bottom_up_2032/2038 variants).
+parent: covert_bottom_up.yaml
+
+covert_parameters:
+  legal_scaling_duration:
+    dist: uniform
+    min: 1
+    max: 8

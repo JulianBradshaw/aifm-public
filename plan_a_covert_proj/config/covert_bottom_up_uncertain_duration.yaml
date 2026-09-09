@@ -1,0 +1,16 @@
+# Covert config — UNCERTAIN DIVERSION DURATION variant (bottom-up sizing).
+#
+# Inherits the standard bottom-up scenario (covert_bottom_up.yaml) and changes ONLY the
+# bottom-up compute knobs file: diversion_duration becomes lognormal, 80% CI [0.1, 2]
+# years (median ~0.45y, clipped at 10y) instead of the fixed 1-year window. Everything
+# else — diverted fractions, facility power, detection, silver bullet — is unchanged, so
+# differences vs a covert_bottom_up.yaml run isolate how uncertainty in HOW LONG the
+# diversion scheme ran propagates into covert compute and outcomes.
+#
+#   python -m plan_a_covert_proj.pipeline.run --num 2000 \
+#       --model-config plan_a_covert_proj/config/model_uncertain_thomas.yaml \
+#       --covert-config plan_a_covert_proj/config/covert_bottom_up_uncertain_duration.yaml
+
+parent: covert_bottom_up.yaml
+
+bottom_up_compute_config: plan_a_covert_proj/config/covert_compute_bottom_up_uncertain_duration.yaml

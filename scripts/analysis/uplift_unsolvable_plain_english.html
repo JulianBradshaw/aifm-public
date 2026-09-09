@@ -1,0 +1,427 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Why some rollouts die with "Uplift Schedule Unsolvable"</title><style>
+:root{--bg:#fffff8;--fg:#1a1a1a;--muted:#5a5a52;--rule:#d8d8cc;--accent:#1f4e79}
+@media (prefers-color-scheme:dark){:root{--bg:#16160f;--fg:#eceadf;--muted:#a3a396;--rule:#3a3a30;--accent:#7fb3e0}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);margin:0;padding:3rem 1.5rem 6rem;
+  font:16.5px/1.65 Charter,Georgia,"Iowan Old Style",serif}
+main{max-width:47rem;margin:0 auto}
+h1{font-size:2.1rem;line-height:1.2;margin:0 0 .4rem;letter-spacing:-.01em}
+h2{font-size:1.42rem;margin:3rem 0 .8rem;padding-bottom:.35rem;border-bottom:1px solid var(--rule);scroll-margin-top:1.5rem}
+h3{margin:2.1rem 0 .5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.055em;
+  font-size:.85rem;font-weight:700;scroll-margin-top:1.5rem}
+p,li{margin:.85rem 0}
+em{color:var(--muted)}
+a{color:var(--accent)}
+hr{border:0;border-top:1px solid var(--rule);margin:2.6rem 0}
+img{max-width:100%;height:auto;aspect-ratio:auto;display:block;margin:1.4rem auto;border:1px solid var(--rule);border-radius:3px}
+blockquote{margin:1.6rem 0;padding:.9rem 1.3rem;border-left:3px solid var(--accent);
+  background:color-mix(in srgb,var(--accent) 7%,transparent);border-radius:0 4px 4px 0}
+blockquote p:first-child{margin-top:0}blockquote p:last-child{margin-bottom:0}
+blockquote h3{margin-top:0;color:var(--accent);text-transform:none;letter-spacing:0;font-size:1.05rem}
+code{font:.88em/1.4 ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  background:color-mix(in srgb,var(--fg) 8%,transparent);padding:.12em .38em;border-radius:3px}
+a code{color:inherit}
+table{border-collapse:collapse;width:100%;margin:1.5rem 0;font-size:.94em;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:.55rem .75rem;text-align:left;vertical-align:top}
+th{background:color-mix(in srgb,var(--fg) 6%,transparent);font-weight:600}
+strong{font-weight:640}
+sup,sub{font-size:.72em;line-height:0}
+.formula{margin:1.8rem 0;padding:1.35rem 1.6rem;border:1px solid var(--rule);border-radius:5px;
+  background:color-mix(in srgb,var(--fg) 3.5%,transparent)}
+.formula p{margin:.4rem 0}
+.formula p.lbl{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+  font-weight:700;margin-top:1.15rem}
+.formula p.lbl:first-child{margin-top:0}
+.formula p.eq{font-size:1.05rem;color:var(--accent);padding:.1rem 0 .3rem 1.1rem}
+.formula p.katex-line{padding-left:0}
+math{font-size:1.14em;color:var(--accent)}
+math[display="block"]{display:block;margin:.75rem 0 1.05rem 1.6rem;text-align:left}
+p math[display="block"]{margin-top:.35rem}
+.katex{display:inline}
+span.katex math[display="block"]{margin-left:1.6rem}
+:not(.formula) > p math{color:inherit;font-size:1.05em}
+.formula code{background:none;padding:0;font-size:.95em;color:inherit}
+.headerlink{display:none}
+</style></head><body><main><h1 id="why-some-rollouts-die-with-uplift-schedule-unsolvable">Why some rollouts die with "Uplift Schedule Unsolvable"</h1>
+<p><em>A plain-English companion to <a href="uplift_unsolvable_region.md" target="_blank"><code>uplift_unsolvable_region.md</code></a>.
+Same findings, no equations required.</em></p>
+<hr />
+<h2 id="what-the-model-is-being-asked-to-do">What the model is being asked to do</h2>
+<p>In <code>uplift-solved</code> mode we don't tell the model when AI hits full coding automation.
+Instead we tell it two things we think we know about <strong>today</strong>:</p>
+<ol>
+<li><strong>The level</strong> — "AI currently makes our coding researchers about <strong>5× more
+   productive</strong>." (call it <em>M*</em>)</li>
+<li><strong>The speed</strong> — "and that boost is <strong>doubling every 3 months</strong>." (call it <em>D</em>)</li>
+</ol>
+<p>The model then has to draw one S-curve — the schedule of how much of coding work gets
+automated as compute grows — that passes through <strong>both</strong> of those hoops at once.</p>
+<p>In 53 out of 754 rollouts (about 7%), it couldn't. Not because the solver gave up, but
+because <strong>no such S-curve exists</strong>. Those runs are thrown away, and the run reports
+"Uplift Schedule Unsolvable".</p>
+<hr />
+<h2 id="the-one-sentence-answer">The one-sentence answer</h2>
+<blockquote>
+<p><strong>You can ask for a big productivity boost, or you can ask for a fast-growing one,
+but past a certain point you cannot have both — and where that point sits is set by
+two parameters nobody was looking at.</strong></p>
+</blockquote>
+<hr />
+<h2 id="why-not-the-intuition">Why not? The intuition</h2>
+<p>Here's the thing that makes this non-obvious: <strong>most of today's AI productivity boost
+doesn't come from the tasks AI just learned to do. It comes from the tasks AI learned
+to do a while ago.</strong></p>
+<p>A task AI could already handle several doublings of compute ago is now dirt cheap to
+run — you can throw enormous amounts of it at the problem. A task AI <em>just barely</em>
+learned to do is still expensive. So the size of today's boost depends on how long
+ago automation started, i.e. how <strong>stretched out</strong> the S-curve is.</p>
+<p>That creates a trap:</p>
+<table>
+<thead>
+<tr>
+<th>To get...</th>
+<th>You need...</th>
+<th>But that means...</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A <strong>big boost today</strong> (high M*)</td>
+<td>a long history of cheap automation → a <strong>stretched, gentle</strong> S-curve</td>
+<td>a gentle curve is, by definition, <strong>growing slowly</strong></td>
+</tr>
+<tr>
+<td><strong>Fast doubling</strong> (small D)</td>
+<td>a <strong>steep</strong> S-curve — lots of new automation right now</td>
+<td>a steep curve has <strong>no history</strong> → today's boost is <strong>small</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Stretch the curve to get the level, and you lose the speed. Steepen it to get the
+speed, and you lose the level. The two requests fight each other.</p>
+<p><img alt="why" src="figures/uplift_unsolvable_mechanism.png" /></p>
+<p><em>Left: as the S-curve gets steeper (moving right), the biggest boost it can possibly
+produce collapses — from 100 billion× down to about 6×. Right: the fastest growth it
+can produce, given that it still has to hit the requested boost, flattens out at a
+ceiling. The red dashed line is what this particular draw asked for. It's above the
+ceiling, so there is nothing to find.</em></p>
+<hr />
+<h2 id="the-speed-limit">The speed limit</h2>
+<p>When you push the S-curve as steep as it will go while still delivering the requested
+boost, everything automatable is already automated. At that point the <em>only</em> thing
+still making AI researchers more productive is that <strong>compute keeps getting more
+efficient</strong>. That's the hard ceiling, and it's beautifully simple:</p>
+<blockquote>
+<p><strong>Maximum growth rate = <code>parallel_penalty</code> × <code>compute-efficiency slope</code> × 2.303</strong></p>
+</blockquote>
+<p>Two parameters. Not the automation asymptote, not the CES elasticity, not what
+progress level you're at — those turn out to be <strong>irrelevant</strong> (their distributions in
+the failed runs and the successful runs are literally identical).</p>
+<p>Turned into something you can check by hand:</p>
+<blockquote>
+<h3 id="fastest-possible-doubling-36-parallel_penalty-efficiency-slope-progress-rate-months"><strong>Fastest possible doubling ≈ 3.6 ÷ (<code>parallel_penalty</code> × <code>efficiency slope</code> × <code>progress rate</code>) months</strong></h3>
+<p>(times a small correction that only matters when the boost is close to 1×)</p>
+</blockquote>
+<p>Ask for anything faster and the rollout dies. <strong>Every single time.</strong> This one
+inequality sorts all 754 rollouts perfectly:</p>
+<p><img alt="boundary" src="figures/uplift_unsolvable_boundary.png" /></p>
+<p><em>Left: the two things we actually sample — boost size and doubling time. The failures
+(red) are scattered through the middle with no clean edge; you can't see the rule from
+here. Right: the same runs, replotted against the speed limit. Everything above the
+line fails, everything below it succeeds — with no overlap at all. The closest
+survivor sits at 95% of its limit; the closest failure at 102%.</em></p>
+<hr />
+<h2 id="the-exact-version">The exact version</h2>
+<p>The speed limit above isn't a fit or an approximation — once every task is
+automatable, the model's uplift has a genuine closed form. The CES collapses to a
+two-term expression whose only moving part is the AI's compute term, and everything
+falls out of that.</p>
+<div class="formula">
+<p class="lbl"><strong>Elasticity of the uplift to effective compute</strong></p>
+<p class="eq katex-line"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><mi>d</mi><mi>ln</mi><mo>⁡</mo><mi>M</mi></mrow><mrow><mi>d</mi><mi>ln</mi><mo>⁡</mo><mi>E</mi></mrow></mfrac><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msub><mi>p</mi><mo>∥</mo></msub><mtext> </mtext><mi>θ</mi><mtext> </mtext><mi>s</mi></mrow><annotation encoding="application/x-tex">\frac{d\ln M}{d\ln E} \;=\; p_\parallel\,\theta\,s</annotation></semantics></math></span></p>
+<p class="lbl"><strong>Elasticity of the excess uplift</strong> — the quantity the doubling time refers to</p>
+<p class="eq katex-line"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><mi>d</mi><mi>ln</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>M</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><mrow><mi>d</mi><mi>ln</mi><mo>⁡</mo><mi>E</mi></mrow></mfrac><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msub><mi>p</mi><mo>∥</mo></msub><mtext> </mtext><mi>θ</mi><mtext>  </mtext><mfrac><mi>M</mi><mrow><mi>M</mi><mo>−</mo><mn>1</mn></mrow></mfrac><mtext>  </mtext><mi>s</mi></mrow><annotation encoding="application/x-tex">\frac{d\ln (M-1)}{d\ln E} \;=\; p_\parallel\,\theta\;\frac{M}{M-1}\;s</annotation></semantics></math></span></p>
+<p class="lbl"><strong>where the distance-from-the-ceiling factor is</strong></p>
+<p class="eq katex-line"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>s</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>1</mn><mo>−</mo><msup><mrow><mo fence="true">(</mo><mfrac><mi>M</mi><msub><mi>M</mi><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">p</mi></mrow></msub></mfrac><mo fence="true">)</mo></mrow><mrow><mo>−</mo><mi>ρ</mi><mi mathvariant="normal">/</mi><msub><mi>p</mi><mo>∥</mo></msub></mrow></msup><mtext>  </mtext><mo>∈</mo><mtext>  </mtext><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><mtext> </mtext><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">s \;=\; 1-\left(\frac{M}{M_{\mathrm{cap}}}\right)^{-\rho/p_\parallel}\;\in\;(0,\,1)</annotation></semantics></math></span></p>
+<p class="lbl"><strong>and the ceiling itself is</strong></p>
+<p class="eq katex-line"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>M</mi><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">p</mi></mrow></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mover accent="true"><mi>Q</mi><mo>ˉ</mo></mover><mrow><mtext> </mtext><msub><mi>p</mi><mo>∥</mo></msub><mi mathvariant="normal">/</mi><mi>ρ</mi></mrow></msup><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msubsup><mi>ε</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">l</mi></mrow><mrow><mtext> </mtext><msub><mi>p</mi><mo>∥</mo></msub><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>ρ</mi><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>ρ</mi></mrow></msubsup></mrow><annotation encoding="application/x-tex">M_{\mathrm{cap}} \;=\; \bar{Q}^{\,p_\parallel/\rho} \;=\; \varepsilon_{\mathrm{tail}}^{\,p_\parallel(1-\rho)/\rho}</annotation></semantics></math></span></p>
+</div>
+<p>Multiply by <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ln</mi><mo>⁡</mo><mn>10</mn><mo>≈</mo><mn>2.303</mn></mrow><annotation encoding="application/x-tex">\ln 10 \approx 2.303</annotation></semantics></math></span> to get "per OOM of effective compute" instead of
+"per log compute" — that's where the 2.303 in the speed limit came from.</p>
+<h3 id="what-all-the-letters-mean">What all the letters mean</h3>
+<table>
+<thead>
+<tr>
+<th>symbol</th>
+<th>in the code</th>
+<th>what it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span></td>
+<td>—</td>
+<td><strong>the uplift.</strong> How many times more coding labour the team effectively has, versus humans alone. <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">M=1</annotation></semantics></math></span> means AI is contributing nothing.</td>
+</tr>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">M-1</annotation></semantics></math></span></td>
+<td>—</td>
+<td><strong>the excess.</strong> The part of the uplift that "doubles every D months" refers to. Doubling <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">M-1</annotation></semantics></math></span> from 0.2 to 0.4 takes <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span> from 1.2× to 1.4×.</td>
+</tr>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi></mrow><annotation encoding="application/x-tex">E</annotation></semantics></math></span></td>
+<td>—</td>
+<td><strong>effective compute.</strong> Progress <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span> is just <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>10</mn></msub><mi>E</mi></mrow><annotation encoding="application/x-tex">\log_{10}E</annotation></semantics></math></span>, so one progress unit = one OOM of effective compute.</td>
+</tr>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mo>∥</mo></msub></mrow><annotation encoding="application/x-tex">p_\parallel</annotation></semantics></math></span></td>
+<td><code>parallel_penalty</code></td>
+<td><strong>the parallelism haircut.</strong> A big pile of AI labour run in parallel is worth less than the same labour run serially; the model raises labour to this power. Typically 0.1–0.9.</td>
+</tr>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span></td>
+<td><code>coding_automation_efficiency_slope</code></td>
+<td><strong>the compute-efficiency slope.</strong> How fast AI's output per unit of compute improves as effective compute grows. Measured here in OOMs per <em>progress unit</em> (the sampled value is per progress-<em>year</em>, so divide by the anchor rate).</td>
+</tr>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi></mrow><annotation encoding="application/x-tex">\rho</annotation></semantics></math></span></td>
+<td><code>rho_coding_labor</code></td>
+<td><strong>the CES substitution parameter.</strong> Negative means AI and humans are <em>complements</em> — you can't fix a missing human step by throwing more AI at it. Typically −1 to −5.</td>
+</tr>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>M</mi><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">p</mi></mrow></msub></mrow><annotation encoding="application/x-tex">M_{\mathrm{cap}}</annotation></semantics></math></span></td>
+<td>≈ <code>max_serial_coding_labor_multiplier</code></td>
+<td><strong>the hard ceiling on the uplift.</strong> No schedule and no amount of compute gets <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span> above this.</td>
+</tr>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ε</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">l</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\varepsilon_{\mathrm{tail}}</annotation></semantics></math></span></td>
+<td><code>tail_eps</code> (derived)</td>
+<td><strong>the un-automatable sliver.</strong> The fraction of tasks at the very top of the difficulty grid that the frontier never automates. It's what creates the ceiling.</td>
+</tr>
+<tr>
+<td><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span></td>
+<td>—</td>
+<td><strong>the throttle.</strong> See below. Between 0 and 1.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="so-what-is-math20">So what is <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span>?</h3>
+<p><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span> is the fraction of each compute-efficiency gain that actually turns into uplift
+growth. Formally it's the AI term's share of the CES labour aggregate,
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mi>x</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">s = x/(1+x)</annotation></semantics></math></span> where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span> is the ratio of the AI-compute term to the leftover
+human-bottleneck term. Informally:</p>
+<ul>
+<li><strong><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>≈</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">s \approx 1</annotation></semantics></math></span> — AI is the binding input.</strong> There's still plenty of headroom below
+  the ceiling, so every bit of extra compute efficiency shows up one-for-one in the
+  uplift. Growth runs at its full rate <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mo>∥</mo></msub><mi>θ</mi></mrow><annotation encoding="application/x-tex">p_\parallel\theta</annotation></semantics></math></span>.</li>
+<li><strong><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>≈</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">s \approx 0</annotation></semantics></math></span> — the un-automatable sliver is the binding input.</strong> You've squeezed
+  out everything automation can give. Extra compute now does essentially nothing,
+  because the work that's left isn't compute-limited. Growth stalls at the ceiling.</li>
+</ul>
+<p>So <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span> is a diminishing-returns dial that starts wide open and closes as <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span> climbs
+toward <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>M</mi><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">p</mi></mrow></msub></mrow><annotation encoding="application/x-tex">M_{\mathrm{cap}}</annotation></semantics></math></span> — which is exactly what the middle expression says:
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mn>1</mn><mo>−</mo><mo stretchy="false">(</mo><mi>M</mi><mi mathvariant="normal">/</mi><msub><mi>M</mi><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">p</mi></mrow></msub><msup><mo stretchy="false">)</mo><mrow><mo>−</mo><mi>ρ</mi><mi mathvariant="normal">/</mi><msub><mi>p</mi><mo>∥</mo></msub></mrow></msup></mrow><annotation encoding="application/x-tex">s = 1 - (M/M_{\mathrm{cap}})^{-\rho/p_\parallel}</annotation></semantics></math></span>.</p>
+<p>And notice what is <em>not</em> anywhere in these formulas: the automation asymptote, the
+shape of the S-curve, where you are in progress. Given the parameters, the growth rate
+depends on the current uplift <strong>and nothing else</strong>.</p>
+<p>One more thing worth staring at: <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>M</mi><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">p</mi></mrow></msub></mrow><annotation encoding="application/x-tex">M_{\mathrm{cap}}</annotation></semantics></math></span> turns out to be exactly the
+<code>max_serial_coding_labor_multiplier</code> parameter (whenever the tail isn't clipped by its
+own bounds). The ceiling wasn't an emergent mystery — it was an input all along.</p>
+<h3 id="excess-vs-raw-they-behave-quite-differently">Excess vs raw: they behave quite differently</h3>
+<p>The doubling time in the elicitation is about the <strong>excess</strong>, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">M-1</annotation></semantics></math></span>, so that second
+formula is the one that governs feasibility. It is not a cosmetic rewrite of the first:</p>
+<ul>
+<li><strong>The raw uplift has a plateau; the excess doesn't.</strong> <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>ln</mi><mo>⁡</mo><mi>M</mi><mi mathvariant="normal">/</mi><mi>d</mi><mi>ln</mi><mo>⁡</mo><mi>E</mi></mrow><annotation encoding="application/x-tex">d\ln M/d\ln E</annotation></semantics></math></span> climbs to
+  exactly <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mo>∥</mo></msub><mi>θ</mi></mrow><annotation encoding="application/x-tex">p_\parallel\theta</annotation></semantics></math></span> and sits there for many OOMs. The excess is always
+  <em>above</em> that, by the factor <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mi>M</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">M/(M-1)</annotation></semantics></math></span>, and only settles onto it from above once
+  <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>≫</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">M \gg 1</annotation></semantics></math></span>.</li>
+<li><strong>The excess elasticity only ever falls.</strong> Along any trajectory both of its moving
+  parts shrink — <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mi>M</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">M/(M-1)</annotation></semantics></math></span> as the uplift grows, and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span> as it nears the ceiling — so
+  the product is strictly decreasing. <strong>The excess-uplift doubling time can only get
+  longer</strong>, and its fastest value is at the moment full automatability is reached.
+  That's precisely why the feasibility ceiling gets evaluated there.</li>
+<li><strong>It blows up as <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>→</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">M \to 1</annotation></semantics></math></span>.</strong> At a 1.01× uplift the excess grows 101× faster than
+  the uplift itself. That is the whole reason small-boost draws never fail: they have
+  about four orders of magnitude of slope headroom.</li>
+</ul>
+<p>Worked through for <code>eli500#27</code> (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mo>∥</mo></msub><mi>θ</mi><mi>ln</mi><mo>⁡</mo><mn>10</mn><mo>=</mo><mn>0.593</mn></mrow><annotation encoding="application/x-tex">p_\parallel\theta\ln 10 = 0.593</annotation></semantics></math></span> per OOM):</p>
+<table>
+<thead>
+<tr>
+<th>uplift <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span></th>
+<th><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>ln</mi><mo>⁡</mo><mi>M</mi><mi mathvariant="normal">/</mi><mi>d</mi><mi>ln</mi><mo>⁡</mo><mi>E</mi></mrow><annotation encoding="application/x-tex">d\ln M/d\ln E</annotation></semantics></math></span></th>
+<th><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>ln</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>M</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>d</mi><mi>ln</mi><mo>⁡</mo><mi>E</mi></mrow><annotation encoding="application/x-tex">d\ln(M-1)/d\ln E</annotation></semantics></math></span></th>
+<th><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span></th>
+<th>excess doubles every</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.1×</td>
+<td>0.214</td>
+<td>0.402</td>
+<td>1.000</td>
+<td>0.75 OOMs</td>
+</tr>
+<tr>
+<td>28.8×</td>
+<td>0.258</td>
+<td>0.267</td>
+<td>1.000</td>
+<td>1.13 OOMs</td>
+</tr>
+<tr>
+<td>4.1e6×</td>
+<td>0.258</td>
+<td>0.258</td>
+<td>1.000</td>
+<td>1.17 OOMs</td>
+</tr>
+<tr>
+<td>6.9e7×</td>
+<td>0.120</td>
+<td>0.120</td>
+<td>0.467</td>
+<td>2.50 OOMs</td>
+</tr>
+<tr>
+<td>7.7e7× (= cap)</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>never</td>
+</tr>
+</tbody>
+</table>
+<h3 id="three-regimes">Three regimes</h3>
+<table>
+<thead>
+<tr>
+<th>where you are</th>
+<th>what happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Far below the ceiling</strong> (<em>s</em> ≈ 1)</td>
+<td>Growth is <strong>exactly <code>p∥ × θ</code></strong> per log-compute. This <em>is</em> the speed limit.</td>
+</tr>
+<tr>
+<td><strong>Approaching the ceiling</strong></td>
+<td>The gap closes as a power law, <em>M</em><sub>cap</sub> − <em>M</em> ∝ <em>E</em><sup>ρθ</sup>, and growth decays to zero. You have about log₁₀(<em>M</em><sub>cap</sub>/<em>M</em>) ÷ (<code>p∥</code>·θ) OOMs of runway before this bites.</td>
+</tr>
+<tr>
+<td><strong>Uplift near 1×</strong></td>
+<td>The <em>M</em>/(<em>M</em>−1) factor blows up: the <em>excess</em> can double arbitrarily fast even while the boost itself barely moves. This is why small-boost draws had ~4 orders of magnitude of headroom and never failed.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="it-checks-out">It checks out</h3>
+<p>Against the actual model code, across seven orders of magnitude of <em>M</em>/<em>M</em><sub>cap</sub>:</p>
+<table>
+<thead>
+<tr>
+<th>draw</th>
+<th><em>M</em></th>
+<th><em>M</em>/<em>M</em><sub>cap</sub></th>
+<th>model</th>
+<th>closed form</th>
+<th>rel. error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>eli500 #27</td>
+<td>171</td>
+<td>2e−6</td>
+<td>0.596449</td>
+<td>0.5964606</td>
+<td>2e−5</td>
+</tr>
+<tr>
+<td>eli500 #27</td>
+<td>4.07e6</td>
+<td>0.053</td>
+<td>0.5929658</td>
+<td>0.5929658</td>
+<td><strong>8e−13</strong></td>
+</tr>
+<tr>
+<td>eli500 #3</td>
+<td>9 740</td>
+<td>0.011</td>
+<td>1.077784</td>
+<td>1.077784</td>
+<td>2e−10</td>
+</tr>
+<tr>
+<td>eli500 #3</td>
+<td>889 426</td>
+<td>0.997</td>
+<td>0.005953199</td>
+<td>0.005953195</td>
+<td>6e−7</td>
+</tr>
+<tr>
+<td>eli500 #480</td>
+<td>2.4185</td>
+<td>0.9991</td>
+<td>0.003480029</td>
+<td>0.003480026</td>
+<td>9e−7</td>
+</tr>
+</tbody>
+</table>
+<p>And the ceiling formula reproduces the level ceiling I originally had to find by brute
+force <strong>to machine precision</strong> — max relative error 4×10⁻¹⁵ across 80 draws.</p>
+<h3 id="which-means-the-two-failure-modes-are-one-formula">Which means the two failure modes are one formula</h3>
+<p>Everything in this document is now the same inequality read two ways:</p>
+<ul>
+<li><strong>51 runs</strong> asked for growth above <code>p∥ · θ · ln10 · M/(M−1)</code> — the <em>s</em> ≈ 1 ceiling.</li>
+<li><strong>2 runs</strong> asked for a boost above <em>M</em><sub>cap</sub> — the ceiling itself.</li>
+</ul>
+<hr />
+<h2 id="is-it-a-bug">Is it a bug?</h2>
+<p><strong>No.</strong> This was the main thing to rule out, and it's ruled out three ways:</p>
+<ul>
+<li>We mapped the error surface on a dense grid across every possible S-curve shape for
+  the failing cases. There's no solution hiding anywhere — for one case, every shape
+  that gets the <em>level</em> right has the <em>speed</em> stuck 78% too low.</li>
+<li>We re-ran the boundary calculation at 10× finer resolution on the 18 closest calls.
+  Nothing moved (&lt; 0.005%) and nothing flipped.</li>
+<li>We varied the numerical step size by 100×. Identical answers.</li>
+</ul>
+<p>So: <strong>51 of the 53 are genuine "no such curve exists". Zero are the solver fumbling a
+solvable problem.</strong></p>
+<h3 id="the-other-2">The other 2</h3>
+<p>Two failures (the same random draw appearing in both runs — same seed) are a different
+and much dumber problem: that draw asks for a <strong>41× productivity boost</strong> while a
+<em>separate</em> parameter in the same draw, <code>max_serial_coding_labor_multiplier</code>, caps the
+boost at <strong>1.37×</strong>. Two parameters describing the same quantity, sampled independently,
+30× apart. Worth fixing at the sampling layer.</p>
+<hr />
+<h2 id="why-this-matters-beyond-the-error-message">Why this matters beyond the error message</h2>
+<p><strong>The 7% we lose is not a random 7%.</strong></p>
+<p>The runs that die are the ones with a big AI boost, growing fast, in worlds where
+compute efficiency improves slowly. That is precisely the <strong>fast-takeoff tail</strong>.
+Silently deleting it tilts the whole forecast toward slower takeoff.</p>
+<p>So this isn't just noise in the pipeline — it's a systematic thumb on the scale, and
+it should be handled deliberately rather than by rollouts quietly failing.</p>
+<hr />
+<h2 id="what-to-do-about-it">What to do about it</h2>
+<ol>
+<li><strong>Stop sampling the doubling time independently.</strong> How fast the boost can double is
+   physically tied to <code>parallel_penalty</code> and the compute-efficiency slope. Sample "how
+   close to the physical floor" instead of an absolute number of months, or correlate
+   them in <code>input_distributions.yaml</code>.</li>
+<li><strong>Reject at sample time, with the formula above.</strong> Then the hole in the posterior is
+   explicit and countable instead of being 7% of rollouts that vanish.</li>
+<li><strong>Make <code>max_serial_coding_labor_multiplier</code> consistent with the requested boost.</strong></li>
+<li><strong>Make the error message say why.</strong> Right now the failure carries no diagnostics —
+   the code computes the reachable range, logs it, and the batch workers throw the log
+   away. Attaching it to the exception (the way the three-condition path already does)
+   would have turned this whole investigation into a one-line search.</li>
+</ol>
+<hr />
+<p><em>Technical version, with the derivation, the exact numbers, and the reproduction
+recipe: <a href="uplift_unsolvable_region.md" target="_blank"><code>uplift_unsolvable_region.md</code></a>.</em></p></main></body></html>

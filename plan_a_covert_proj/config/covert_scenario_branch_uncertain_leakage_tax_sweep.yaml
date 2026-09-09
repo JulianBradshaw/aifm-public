@@ -1,0 +1,17 @@
+# Covert config — UNCERTAIN-LEAKAGE + UNCERTAIN-TAX variant.
+#
+# Inherits covert_scenario_branch_uncertain_leakage.yaml (beta leakage + the scenario
+# branch) and overrides ONLY alignment_tax_progress_years, making the alignment tax
+# uncertain (uniform 0-4 progress-years) to sweep its effect.
+parent: covert_scenario_branch_uncertain_leakage.yaml
+
+covert_parameters:
+  # Alignment tax: research the legal must spend on alignment instead of capability,
+  # in 2025-PROGRESS-YEARS (a stock). Converted to OOMs per rollout via the anchor
+  # progress rate (tax_OOMs = this × anchor_progress_rate). The discovered glidepath
+  # reaches TED-AI + tax_OOMs; the used (deployed) glidepath reaches bare TED-AI.
+  # 0 => symmetric race.
+  alignment_tax_progress_years:
+    dist: uniform
+    min: 0.0
+    max: 4

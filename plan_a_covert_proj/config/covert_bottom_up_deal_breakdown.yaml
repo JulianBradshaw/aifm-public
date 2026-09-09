@@ -1,0 +1,50 @@
+# Deal-breakdown scenario with BOTTOM-UP covert sizing: inherits covert_bottom_up.yaml
+# (compute_mode: bottom_up_estimate + uncertain diversion params via
+# covert_compute_bottom_up.yaml + uncertain per-site power and leakage) and adds the same
+# deal_breakdown block as covert_scenario_branch_deal_breakdown.yaml (keep the two blocks
+# in sync when editing hazard/knobs). Covert size now varies across rollouts, so the
+# detection-conditioned covert capability curve changes shape: larger, faster projects are
+# more likely to have been detected by any epistemic vantage, and the surviving covert
+# worlds skew small and slow.
+parent: covert_bottom_up.yaml
+deal_breakdown:
+  # WHEN the deal collapses: hazard rate (per-year breakdown probability given survival
+  # so far) vs years after the DEAL START (= the pause landing). Linearly interpolated
+  # between the points; past the last point it decays exponentially at `decay` per year.
+  # With these values ~28% of deals never break down (S(inf) = exp(-1.28) ≈ 0.28) and the
+  # median breakdown lands ~9 years after the deal starts.
+  # NOTE: the sim can only break the deal once the setup pause has ended, so a collapse
+  # sampled inside the setup window clamps to the moment the pause ends.
+  hazard:
+    type: linear_plus_decay
+    points:                 # [years after deal start, hazard /yr]
+      - [0, 0.12]
+      - [6, 0.06]
+      - [11, 0.03]
+      - [16, 0.02]
+    decay: 0.95
+  # "Deal survives for at least N years": condition the hazard on no breakdown before
+  # then. Draws come from the truncated survival curve S(t)/S(N) — every sampled
+  # collapse lands >= N years after the deal starts, and P(never) rises to S(inf)/S(N).
+  # 0 = unconditioned.
+  min_survival_years: 0
+  # The sim's breakdown knobs (same as the frontend's Deal Collapse tab), sampled per
+  # rollout like covert_parameters. Fixed at the explorer's defaults for now — widen to
+  # real distributions as elicited.
+  # What breakdown_compute_reduction is a share OF (optional; categorical, dist=fixed only):
+  #   frontier_at_pause (default) — the pre-deal frontier at the pause; compute built/kept
+  #     during the deal is effectively destroyed at dissolution.
+  #   world_at_breakdown — the world's compute at the moment the deal collapses (the input
+  #     series carried through the deal); nothing is destroyed, and the reduction is the %
+  #     of current-world compute the largest post-dissolution project runs on.
+  breakdown_compute_mode:
+    dist: fixed
+    value: frontier_at_pause
+  # Leading company's compute as a share of the mode's reference mix (see above).
+  breakdown_compute_reduction:
+    dist: fixed
+    value: 0.1
+  # How fast the leading company's compute grows after the collapse (OOM/yr).
+  post_breakdown_compute_growth_rate:
+    dist: fixed
+    value: 1.0

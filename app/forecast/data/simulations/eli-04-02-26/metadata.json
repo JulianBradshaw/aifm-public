@@ -1,0 +1,16 @@
+{
+  "id": "eli-04-02-26",
+  "forecaster": "Eli",
+  "date": "04-02-26",
+  "customIdentifier": null,
+  "sourceRunDir": "/root/ai-futures-calculator-1/outputs/results_20260401_eli_rerun/eli/20260401_003344",
+  "modelVersion": null,
+  "exportedAt": "2026-04-01T01:11:22.313251",
+  "numSamples": 10000,
+  "presentDay": 2026.0959,
+  "timeRange": [
+    2017.0,
+    2200.0
+  ],
+  "seed": 42
+}

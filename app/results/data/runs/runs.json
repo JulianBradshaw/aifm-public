@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "defaultRun": "eli-20251229",
+  "runs": [
+    {
+      "id": "eli-20251229",
+      "label": "Eli's Parameters",
+      "forecaster": "eli",
+      "date": "2025-12-30",
+      "numSamples": 10000,
+      "dataPath": "runs/eli-20251229",
+      "medianScDate": "2031-10",
+      "medianScDecimalYear": 2031.768195100421
+    },
+    {
+      "id": "daniel-20251229",
+      "label": "Daniel's Parameters",
+      "forecaster": "daniel",
+      "date": "2025-12-30",
+      "numSamples": 10000,
+      "dataPath": "runs/daniel-20251229",
+      "medianScDate": "2030-10",
+      "medianScDecimalYear": 2030.8284419027586
+    }
+  ]
+}
